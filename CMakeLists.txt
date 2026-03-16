@@ -9,5 +9,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 add_subdirectory(./dependencies/SDL EXCLUDE_FROM_ALL)
 
-add_executable(task01 task01.cpp)
+add_executable(task01 
+    ./dependencies/glad/src/glad.c
+    task01.cpp)
+target_include_directories(task01 PUBLIC
+./dependencies/glad/include)
 target_link_libraries(task01 PRIVATE SDL3::SDL3)
