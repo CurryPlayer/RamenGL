@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <vector>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 
@@ -15,8 +17,83 @@ static SDL_Window*   g_pWindow;
 static SDL_Renderer* g_pRenderer;
 static SDL_GLContext g_glContext;
 
+bool FileExists(const char* file)
+{
+    FILE* pFileDesc = nullptr;
+    pFileDesc       = fopen(file, "r");
+    if ( pFileDesc == nullptr )
+    {
+        return false;
+    }
+    fclose(pFileDesc);
+
+    return true;
+}
+
+struct File
+{
+    void Destroy()
+    {
+        if ( data )
+        {
+            free(data);
+            size = 0;
+        }
+    }
+
+    char*  data;
+    size_t size;
+};
+
+File ReadFile(const char* file)
+{
+    FILE* pFileDesc = 0;
+    pFileDesc       = fopen(file, "rb");
+    if ( file == 0 )
+    {
+        return File{};
+    }
+    fseek(pFileDesc, 0L, SEEK_END);
+    size_t size = ftell(pFileDesc);
+    fseek(pFileDesc, 0L, SEEK_SET);
+    char* data = (char*)malloc(size + 1);
+    fread(data, sizeof(char), size, pFileDesc);
+    data[ size ] = '\0';
+    fclose(pFileDesc);
+
+    return File{ data, size };
+}
+
+class Model
+{
+  public:
+    bool Load(const char* file)
+    {
+        if ( !FileExists(file) )
+        {
+            return false;
+        }
+
+        File modelFile = ReadFile(file);
+        printf("%s", modelFile.data);
+        modelFile.Destroy();
+
+        return true;
+    }
+
+  private:
+    std::vector<tinyobj::shape_t> m_Shapes;
+};
+
 int main(int argc, char** argv)
 {
+    Model model{};
+    if ( !model.Load("./models/cylinder.obj") )
+    {
+        fprintf(stderr, "Could not load model file.\n");
+    }
+
+    exit(1);
 
     if ( !SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) )
     {

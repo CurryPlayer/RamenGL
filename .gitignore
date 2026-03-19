@@ -4,4 +4,5 @@
 !/dependencies/glad/**
 !/dependencies/tiny_obj_loader.h
 **/.cache
+**/models/**
 **/.DS_Store
