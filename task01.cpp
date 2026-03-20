@@ -93,20 +93,53 @@ struct Vertex
 class Shader
 {
   public:
-    bool Load(const char* vertShaderSource, const char* fragShaderSource)
+    bool Load(const char* vertShaderFile, const char* fragShaderFile)
     {
-        if ( !FileExists(vertShaderSource) )
+        GLuint vertShader;
+        GLuint fragShader;
+
+        if ( !CompileShader(vertShaderFile, &vertShader, GL_VERTEX_SHADER) )
         {
-            fprintf(stderr, "Shader file: '%s' does not exist.\n", vertShaderSource);
+            fprintf(stderr, "Failed to compile shader: '%s'\n", vertShaderFile);
+            return false;
+        }
+        if ( !CompileShader(fragShaderFile, &fragShader, GL_FRAGMENT_SHADER) )
+        {
+            fprintf(stderr, "Failed to compile shader: '%s'\n", fragShaderFile);
+            return false;
+        }
+
+        m_Program = glCreateProgram();
+        glAttachShader(m_Program, vertShader);
+        glAttachShader(m_Program, fragShader);
+        glLinkProgram(m_Program);
+
+        glDeleteShader(vertShader);
+        glDeleteShader(fragShader);
+
+        return true;
+    }
+
+    void Use()
+    {
+        glUseProgram(m_Program);
+    }
+
+  private:
+    bool CompileShader(const char* shaderFilename, GLuint* shader, GLenum shaderType)
+    {
+        if ( !FileExists(shaderFilename) )
+        {
+            fprintf(stderr, "Shader file: '%s' does not exist.\n", shaderFilename);
             return false;
         }
 
         /* Read shader source from disk and compile. */
-        File   shaderData = ReadFile(vertShaderSource);
-        GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertShader, 1, &shaderData.data, nullptr);
-        glCompileShader(vertShader);
-        if ( !IsCompiled(vertShader) )
+        File shaderFile = ReadFile(shaderFilename);
+        *shader         = glCreateShader(shaderType);
+        glShaderSource(*shader, 1, &shaderFile.data, nullptr);
+        glCompileShader(*shader);
+        if ( !IsCompiled(*shader) )
         {
             return false;
         }
@@ -129,11 +162,6 @@ class Shader
         }
 
         return true;
-    }
-
-    void Use()
-    {
-        glUseProgram(m_Program);
     }
 
   private:
@@ -290,6 +318,22 @@ int main(int argc, char** argv)
             if ( e.type == SDL_EVENT_QUIT )
             {
                 isRunning = false;
+            }
+
+            if ( e.type == SDL_EVENT_KEY_DOWN )
+            {
+                switch ( e.key.key )
+                {
+                case SDLK_ESCAPE:
+                {
+                    isRunning = false;
+                }
+                break;
+
+                default:
+                {
+                }
+                }
             }
         }
 
