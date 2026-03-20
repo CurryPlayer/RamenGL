@@ -67,27 +67,29 @@ File ReadFile(const char* file)
 
 struct Vec3f
 {
-    float x, y, z;
-};
-
-struct Vertex
-{
     union
     {
-        Vec3f position;
-        float positions[ 3 ];
+        float x, y, z;
+        float components[ 3 ];
     };
 
     const float operator[](const int index) const
     {
         assert(index < 3);
-        return positions[ index ];
+        return components[ index ];
     }
 
     float& operator[](const int index)
     {
-        return positions[ index ];
+        return components[ index ];
     }
+};
+
+struct Vertex
+{
+    Vec3f position;
+    Vec3f normal;
+    Vec3f color;
 };
 
 class Shader
@@ -202,13 +204,11 @@ class Model
         {
             for ( int j = 0; j < m_Shapes[ i ].mesh.indices.size(); j++ )
             {
-                Vertex v{};
+                tinyobj::index_t idx = m_Shapes[ i ].mesh.indices[ j ];
+                Vertex           v{};
                 for ( int k = 0; k < 3; k++ )
                 {
-                    tinyobj::index_t idx = m_Shapes[ i ].mesh.indices[ j ];
-
-                    float component = attrib.vertices[ idx.vertex_index ];
-                    v[ k ]          = component;
+                    v.position[ k ] = attrib.vertices[ 3 * idx.vertex_index + k ];
                 }
                 m_Vertices.push_back(v);
             }
@@ -306,18 +306,22 @@ int main(int argc, char** argv)
         fprintf(stderr, "Could not load shader.\n");
     }
 
-    /* Dummy VAO. */
-    GLuint VAO;
-    glCreateVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
     /* Create a model on GPU */
     Model model{};
-    if ( !model.Load("./models/cylinder.obj") )
+    if ( !model.Load("./models/Skull.obj") )
     {
         fprintf(stderr, "Could not load model file.\n");
     }
 
+    /* VAO. */
+    GLuint VAO;
+    glCreateVertexArrays(1, &VAO);
+    glVertexArrayVertexBuffer(VAO, 0, model.GetBuffer(), 0, sizeof(Vertex));
+    glVertexArrayAttribBinding(VAO, 0, 0);
+    glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(VAO, 0);
+
+    /* Main loop */
     bool isRunning = true;
     SDL_GL_SetSwapInterval(1); /* 1 = VSync enabledm 0 = VSync disabled */
     glPointSize(20.0f);        // TODO: Delete later.
@@ -353,8 +357,8 @@ int main(int argc, char** argv)
         glClearColor(1.0f, 0.95f, 0.0f, 1.0f);
 
         shader.Use();
-        // glBindBuffer(GL_ARRAY_BUFFER, model.GetBuffer());
-        glDrawArrays(GL_POINTS, 0, 1);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, model.NumVertices());
 
         SDL_GL_SwapWindow(g_pWindow);
     }
