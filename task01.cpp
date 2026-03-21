@@ -3,6 +3,7 @@
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -97,7 +98,28 @@ struct Vec3f
     {
         return components[ index ];
     }
+
+    Vec3f operator/(float s) const
+    {
+        return Vec3f{ x / s, y / s, z / s };
+    }
 };
+
+Vec3f Cross(const Vec3f& a, const Vec3f& b)
+{
+    return Vec3f{ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
+}
+
+float Length(const Vec3f& v)
+{
+    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+Vec3f Normalize(const Vec3f& v)
+{
+    float len = Length(v);
+    return v / len;
+}
 
 struct Vertex
 {
@@ -265,6 +287,23 @@ class Model
     std::vector<tinyobj::shape_t> m_Shapes;
     std::vector<Vertex>           m_Vertices;
     GLuint                        m_Buffer;
+};
+
+class Camera
+{
+  public:
+    Camera(Vec3f position, Vec3f forward)
+    {
+        m_Position  = position;
+        m_Forward   = forward;
+        Vec3f up    = Vec3f{ 0.0f, 1.0f, 0.0f };
+        Vec3f right = Normalize(Cross(m_Forward, up));
+    }
+
+  private:
+    Vec3f m_Position;
+    Vec3f m_Forward;
+    Vec3f m_Up;
 };
 
 static std::vector<Vertex> g_Cone;
