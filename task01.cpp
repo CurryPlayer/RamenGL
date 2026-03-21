@@ -1,13 +1,15 @@
 #include <glad/glad.h>
 
-#include "SDL3/SDL_events.h"
-#include "SDL3/SDL_video.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <vector>
+
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_opengl3.h>
+#include <imgui/imgui_impl_sdl3.h>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
@@ -624,6 +626,25 @@ int main(int argc, char** argv)
     printf("Got OpenGL Version: %s\n", glGetString(GL_VERSION));
     printf("Got OpenGL Renderer: %s\n", glGetString(GL_RENDERER));
 
+    /* Init Dear ImGUI */
+    /* ImGUI context */
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+    /* Setup Dear ImGui style */
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // TODO: Setup imgui scaling.
+
+    /* Setup Platform/Renderer backends */
+    ImGui_ImplSDL3_InitForOpenGL(g_pWindow, g_glContext);
+    ImGui_ImplOpenGL3_Init("#version 460");
+
     /* Load shaders. */
     Shader shader{};
     if ( !shader.Load("./shaders/task01.vert", "./shaders/task01.frag") )
@@ -688,6 +709,7 @@ int main(int argc, char** argv)
     while ( isRunning )
     {
         SDL_Event e;
+        ImGui_ImplSDL3_ProcessEvent(&e);
         while ( SDL_PollEvent(&e) )
         {
             if ( e.type == SDL_EVENT_QUIT )
@@ -712,6 +734,16 @@ int main(int argc, char** argv)
             }
         }
 
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::ShowDemoWindow();
+
+        /* ImGUI Rendering */
+        ImGui::Render();
+
         /* Rendering */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(1.0f, 0.95f, 0.0f, 1.0f);
@@ -722,6 +754,8 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glDrawArrays(GL_TRIANGLES, 0, model.NumVertices());
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         SDL_GL_SwapWindow(g_pWindow);
     }
