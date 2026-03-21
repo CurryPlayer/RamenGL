@@ -764,6 +764,10 @@ int main(int argc, char** argv)
     shader.Delete();
     glDeleteVertexArrays(1, &VAO);
 
+    /* ImGUI Shutdown */
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
     /* SDL Shutdown */
     SDL_GL_DestroyContext(g_glContext);
     SDL_DestroyWindow(g_pWindow);
