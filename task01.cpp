@@ -17,6 +17,10 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#define RAMEN_PI (3.14159265358979323846264338327950288)
+#define TO_RAD(angle) (RAMEN_PI * angle / 180.0f)
+#define TO_GRD(angle) (180.0f * angle / RAMEN_PI)
+
 static SDL_Window*   g_pWindow;
 static SDL_Renderer* g_pRenderer;
 static SDL_GLContext g_glContext;
@@ -112,6 +116,11 @@ struct Vec3f
         return Vec3f{ x - right.x, y - right.y, z - right.z };
     }
 
+    const Vec3f operator-() const
+    {
+        return Vec3f{ -x, -y, -z };
+    }
+
     Vec3f operator+(const Vec3f& right) const
     {
         return Vec3f{ x + right.x, y + right.y, z + right.z };
@@ -120,6 +129,26 @@ struct Vec3f
     Vec3f operator/(float s) const
     {
         return Vec3f{ x / s, y / s, z / s };
+    }
+
+    Vec3f operator*(const Vec3f& right) const
+    {
+        return Vec3f{ x * right.x, y * right.y, z * right.z };
+    }
+
+    /* Vector * Scalar */
+    Vec3f operator*(const float& s) const
+    {
+        return Vec3f{ s * x, s * y, s * z };
+    }
+
+    Vec3f& operator*=(const float& s)
+    {
+        x *= s;
+        y *= s;
+        z *= s;
+
+        return *this;
     }
 };
 
@@ -162,7 +191,21 @@ struct Vec4f
         w = 1.0f;
     }
 
+    Vec4f(const Vec3f& v3, const float& s)
+    {
+        x = v3.x;
+        y = v3.y;
+        z = v3.z;
+        w = s;
+    }
+
     const float& operator[](const int index) const
+    {
+        assert(index < 4);
+        return (&x)[ index ];
+    }
+
+    float& operator[](const int index)
     {
         assert(index < 4);
         return (&x)[ index ];
@@ -173,55 +216,121 @@ struct Vec4f
         return Vec4f{ x - right.x, y - right.y, z - right.z, w - right.w };
     }
 
+    const Vec4f operator-() const
+    {
+        return Vec4f{ -x, -y, -z, -w };
+    }
+
     Vec4f operator+(const Vec4f& right) const
     {
         return Vec4f{ x + right.x, y + right.y, z + right.z, w + right.w };
-    }
-
-    float& operator[](const int index)
-    {
-        assert(index < 4);
-        return (&x)[ index ];
     }
 
     Vec4f operator/(float s) const
     {
         return Vec4f{ x / s, y / s, z / s, w / s };
     }
+
+    Vec4f operator*(const Vec4f& right) const
+    {
+        return Vec4f{ x * right.x, y * right.y, z * right.z, w * right.w };
+    }
+
+    /* Vector * Scalar */
+    Vec4f operator*(const float& s) const
+    {
+        return Vec4f{ s * x, s * y, s * z, s * w };
+    }
 };
 
+/* 4x4 Matrix with floats.
+ * Stores elements in column major order.
+ */
 struct Mat4f
 {
-    Vec4f columns[ 4 ];
+    float e[ 4 ][ 4 ];
 
-    Mat4f()
+    Mat4f() = default;
+
+    Mat4f(
+        /* 1st col */
+        const float& d00,
+        const float& d01,
+        const float& d02,
+        const float& d03,
+        /* 2nd col */
+        const float& d10,
+        const float& d11,
+        const float& d12,
+        const float& d13,
+        /* 3rd col */
+        const float& d20,
+        const float& d21,
+        const float& d22,
+        const float& d23,
+        /* 4th col */
+        const float& d30,
+        const float& d31,
+        const float& d32,
+        const float& d33)
     {
-        columns[ 0 ] = Vec4f{};
-        columns[ 1 ] = Vec4f{};
-        columns[ 2 ] = Vec4f{};
-        columns[ 3 ] = Vec4f{};
+        e[ 0 ][ 0 ] = d00;
+        e[ 0 ][ 1 ] = d01;
+        e[ 0 ][ 2 ] = d02;
+        e[ 0 ][ 3 ] = d03;
+
+        e[ 1 ][ 0 ] = d10;
+        e[ 1 ][ 1 ] = d11;
+        e[ 1 ][ 2 ] = d12;
+        e[ 1 ][ 3 ] = d13;
+
+        e[ 2 ][ 0 ] = d20;
+        e[ 2 ][ 1 ] = d21;
+        e[ 2 ][ 2 ] = d22;
+        e[ 2 ][ 3 ] = d23;
+
+        e[ 3 ][ 0 ] = d30;
+        e[ 3 ][ 1 ] = d31;
+        e[ 3 ][ 2 ] = d32;
+        e[ 3 ][ 3 ] = d33;
     }
 
     Mat4f(const Vec4f& col1, const Vec4f& col2, const Vec4f& col3, const Vec4f& col4)
     {
-        columns[ 0 ] = col1;
-        columns[ 1 ] = col2;
-        columns[ 2 ] = col3;
-        columns[ 3 ] = col4;
+        e[ 0 ][ 0 ] = col1.x;
+        e[ 0 ][ 1 ] = col1.y;
+        e[ 0 ][ 2 ] = col1.z;
+        e[ 0 ][ 3 ] = col1.w;
+        e[ 1 ][ 0 ] = col2.x;
+        e[ 1 ][ 1 ] = col2.y;
+        e[ 1 ][ 2 ] = col2.z;
+        e[ 1 ][ 3 ] = col2.w;
+        e[ 2 ][ 0 ] = col3.x;
+        e[ 2 ][ 1 ] = col3.y;
+        e[ 2 ][ 2 ] = col3.z;
+        e[ 2 ][ 3 ] = col3.w;
+        e[ 3 ][ 0 ] = col4.x;
+        e[ 3 ][ 1 ] = col4.y;
+        e[ 3 ][ 2 ] = col4.z;
+        e[ 3 ][ 3 ] = col4.w;
     }
 
     /* Follows mathematical notation:
      * i = row, j = column.
      */
-    const float& operator()(int i, int j)
+    const float& operator()(int i, int j) const
     {
-        const Vec4f& col = columns[ j ];
-        return col[ i ];
+        return e[ j ][ i ];
     }
 
-    const Vec4f& operator[](int col)
+    const Vec4f& operator[](int col) const
     {
-        return columns[ col ];
+        return reinterpret_cast<const Vec4f&>(e[ col ]);
+    }
+
+    Vec4f& operator[](int col)
+    {
+        return reinterpret_cast<Vec4f&>(e[ col ]);
     }
 
     static Mat4f Identity()
@@ -234,7 +343,7 @@ struct Mat4f
 
     const float* Data()
     {
-        return (float*)(&columns[ 0 ].x);
+        return (float*)(e[ 0 ]);
     }
 
     const char* ToString() const
@@ -242,22 +351,22 @@ struct Mat4f
         static char buffer[ 256 ];
         sprintf(buffer,
                 "%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n",
-                columns[ 0 ].x,
-                columns[ 1 ].x,
-                columns[ 2 ].x,
-                columns[ 3 ].x,
-                columns[ 0 ].y,
-                columns[ 1 ].y,
-                columns[ 2 ].y,
-                columns[ 3 ].y,
-                columns[ 0 ].z,
-                columns[ 1 ].z,
-                columns[ 2 ].z,
-                columns[ 3 ].z,
-                columns[ 0 ].w,
-                columns[ 1 ].w,
-                columns[ 2 ].w,
-                columns[ 3 ].w);
+                e[ 0 ][ 0 ],
+                e[ 1 ][ 0 ],
+                e[ 2 ][ 0 ],
+                e[ 3 ][ 0 ],
+                e[ 0 ][ 1 ],
+                e[ 1 ][ 1 ],
+                e[ 2 ][ 1 ],
+                e[ 3 ][ 1 ],
+                e[ 0 ][ 2 ],
+                e[ 1 ][ 2 ],
+                e[ 2 ][ 2 ],
+                e[ 3 ][ 2 ],
+                e[ 0 ][ 3 ],
+                e[ 1 ][ 3 ],
+                e[ 2 ][ 3 ],
+                e[ 3 ][ 3 ]);
         return buffer;
     }
 };
@@ -283,19 +392,70 @@ Vec3f Normalize(const Vec3f& v)
     return v / len;
 }
 
+float Dot(const Vec3f& a, const Vec3f& b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
 Vec4f Normalize(const Vec4f& v)
 {
     float len = Length(v);
     return v / len;
 }
 
+float Dot(const Vec4f& a, const Vec4f& b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+/* Create Inverse of 4x4 Matrix.
+ * Code from 'Foundations of Game Engine programming Vol.1'
+ * by Eric Lengyel.
+ */
 Mat4f Inverse(const Mat4f& m)
 {
-    Mat4f result{};
+    const Vec3f& a = reinterpret_cast<const Vec3f&>(m[ 0 ]);
+    const Vec3f& b = reinterpret_cast<const Vec3f&>(m[ 1 ]);
+    const Vec3f& c = reinterpret_cast<const Vec3f&>(m[ 2 ]);
+    const Vec3f& d = reinterpret_cast<const Vec3f&>(m[ 3 ]);
 
-    // const Vec3f& a = Vec3f(m[ 0 ]);
+    const float& x = m(3, 0);
+    const float& y = m(3, 1);
+    const float& z = m(3, 2);
+    const float& w = m(3, 3);
 
-    return result;
+    Vec3f s = Cross(a, b);
+    Vec3f t = Cross(c, d);
+    Vec3f u = a * y - b * x;
+    Vec3f v = c * w - d * z;
+
+    float invDet = 1.0f / (Dot(s, v) + Dot(t, u));
+    s *= invDet;
+    t *= invDet;
+    u *= invDet;
+    v *= invDet;
+
+    Vec3f r0 = Cross(b, v) + t * y;
+    Vec3f r1 = Cross(v, a) - t * x;
+    Vec3f r2 = Cross(d, u) + s * w;
+    Vec3f r3 = Cross(u, c) - s * z;
+
+    return Mat4f(r0.x,
+                 r0.y,
+                 r0.z,
+                 -Dot(b, t),
+                 r1.x,
+                 r1.y,
+                 r1.z,
+                 Dot(a, t),
+                 r2.x,
+                 r2.y,
+                 r2.z,
+                 -Dot(d, s),
+                 r3.x,
+                 r3.y,
+                 r3.z,
+                 Dot(c, s));
 }
 
 struct Vertex
@@ -507,7 +667,62 @@ class Camera
 
 Mat4f LookAt(const Camera& camera)
 {
-    return Mat4f{ camera.GetRight(), camera.GetUp(), camera.GetForward(), camera.GetPosition() };
+    return Inverse(Mat4f{ camera.GetRight(), camera.GetUp(), -camera.GetForward(), camera.GetPosition() });
+}
+
+/* Creates a right-handed, y-up, perspective projection matrix. */
+Mat4f PerspectiveProjection(const float& fovy, const float& aspect, const float& near, const float& far)
+{
+    float d = 1.0f / tanf(fovy * 0.5f);
+    float s = far - near;
+    return Mat4f(d / aspect,
+                 0.0f,
+                 0.0f,
+                 0.0f,
+                 0.0f,
+                 d,
+                 0.0f,
+                 0.0f,
+                 0.0f,
+                 0.0f,
+                 -(near + far) / s,
+                 -1.0f,
+                 0.0f,
+                 0.0f,
+                 -(2.0f * near * far) / s,
+                 0.0f);
+}
+
+Mat4f Translate(const Vec3f& v)
+{
+    Mat4f result = Mat4f::Identity();
+    result[ 3 ]  = Vec4f{ v, 1.0f };
+
+    return result;
+}
+
+Mat4f Scale(const Vec3f& v)
+{
+    Mat4f result = Mat4f::Identity();
+    result[ 0 ][ 0 ] *= v.x;
+    result[ 1 ][ 1 ] *= v.y;
+    result[ 2 ][ 2 ] *= v.z;
+
+    return result;
+}
+
+void Translate(Mat4f& m, const Vec3f& v)
+{
+    m[ 3 ][ 0 ] += v.x;
+    m[ 3 ][ 1 ] += v.y;
+    m[ 3 ][ 2 ] += v.z;
+}
+
+void Scale(Mat4f& m, const Vec3f& v)
+{
+    m[ 0 ][ 0 ] *= v.x;
+    m[ 1 ][ 1 ] *= v.y;
+    m[ 2 ][ 2 ] *= v.z;
 }
 
 static std::vector<Vertex> g_Cone;
@@ -515,7 +730,6 @@ static std::vector<Vertex> g_Cap;
 static GLuint              g_ConeVBO;
 static GLuint              g_CapVBO;
 
-#define RAMEN_PI 3.14f
 void CreateGeometry()
 {
     // Triangle Fan mit 18 Vertices anlegen
@@ -528,8 +742,8 @@ void CreateGeometry()
     for ( float angle = 0.0f; angle < (2.0f * RAMEN_PI); angle += (RAMEN_PI / 8.0f) )
     {
         // Berechne x und y Positionen des naechsten Vertex
-        float x = 50.0f * sin(angle);
-        float y = 50.0f * cos(angle);
+        float x = 50.0f * sinf(angle);
+        float y = 50.0f * cosf(angle);
 
         Vertex v{};
 
@@ -660,7 +874,7 @@ int main(int argc, char** argv)
 
     /* Create a model on GPU */
     Model model{};
-    if ( !model.Load("./models/Skull.obj") )
+    if ( !model.Load("./models/stormtrooper.obj") )
     {
         fprintf(stderr, "Could not load model file.\n");
     }
@@ -669,13 +883,14 @@ int main(int argc, char** argv)
     CreateGeometry();
 
     /* Create camera */
-    Camera camera(Vec3f{ 1.0f, 1.0f, 0.5f }, Vec3f{ 0.0f });
+    Camera camera(Vec3f{ 0.0f, 0.0f, 10.0f }, Vec3f{ 0.0f, 0.0f, 0.0f });
 
     /* Model mat*/
-    Mat4f modelMat = Mat4f::Identity();
+    Mat4f modelMat = Scale(Vec3f{ 3.0f, 3.0f, 3.0f });
+    Translate(modelMat, Vec3f{ 0.0f, -10.0f, -20.0f }); //Mat4f::Identity();
 
     /* View mat */
-    Mat4f viewMat = Mat4f::Identity(); //LookAt(camera);
+    Mat4f viewMat = Mat4f::Identity();
 #if 1
     printf("viewMat: \n%s\n", viewMat.ToString());
     const float* viewMatData = viewMat.Data();
@@ -697,9 +912,6 @@ int main(int argc, char** argv)
     printf("viewMatData: %f\n", viewMatData[ 15 ]);
 #endif
 
-    /* Projection mat */
-    Mat4f projMat = Mat4f::Identity();
-
     /* VAO. */
     GLuint VAO;
     glCreateVertexArrays(1, &VAO);
@@ -707,6 +919,14 @@ int main(int argc, char** argv)
     glVertexArrayAttribBinding(VAO, 0, 0);
     glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
     glEnableVertexArrayAttrib(VAO, 0);
+
+    /* Some global GL states */
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    // glDisable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     /* Main loop */
     bool isRunning = true;
@@ -740,6 +960,16 @@ int main(int argc, char** argv)
                 }
             }
         }
+
+        /* Query new frame dimensions */
+        int windowWidth, windowHeight;
+        SDL_GetWindowSize(g_pWindow, &windowWidth, &windowHeight);
+
+        /* Adjust viewport and perspective projection accordingly. */
+        glViewport(0, 0, windowWidth, windowHeight);
+        /* Projection mat */
+        float aspect  = (float)windowWidth / (float)windowHeight;
+        Mat4f projMat = PerspectiveProjection(TO_RAD(70.0f), aspect, 0.01f, 500.0f);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
