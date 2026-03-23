@@ -324,6 +324,11 @@ struct Mat4f
         return e[ j ][ i ];
     }
 
+    float& operator()(int i, int j)
+    {
+        return e[ j ][ i ];
+    }
+
     const Vec4f& operator[](int col) const
     {
         return reinterpret_cast<const Vec4f&>(e[ col ]);
@@ -346,6 +351,26 @@ struct Mat4f
             }
         }
         *this = result;
+    }
+
+    Mat4f operator*(const Mat4f& rhs)
+    {
+        Mat4f result{};
+        for ( int row = 0; row < 4; row++ )
+        {
+            for ( int col = 0; col < 4; col++ )
+            {
+                float sum = 0.0f;
+                for ( int k = 0; k < 4; k++ )
+                {
+                    sum += (*this)(row, k) * rhs(k, col);
+                }
+
+                result(row, col) = sum;
+            }
+        }
+
+        return result;
     }
 
     static Mat4f Identity()
@@ -829,6 +854,12 @@ void CreateGeometry()
 
 int main(int argc, char** argv)
 {
+    Mat4f M1    = Mat4f::Identity();
+    Mat4f M2    = Mat4f::Identity();
+    Mat4f M1xM2 = M1 * M2;
+    printf("M1xM2:\n%s\n", M1xM2.ToString());
+    exit(1);
+
     if ( !SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) )
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not initialize SDL. Reason: %s\n", SDL_GetError());
