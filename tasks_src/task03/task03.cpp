@@ -1,4 +1,3 @@
-#include <GLES2/gl2.h>
 #include <glad/glad.h>
 
 #include <assert.h>
