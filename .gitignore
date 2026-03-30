@@ -1,12 +1,17 @@
 **/build/**
 /dependencies/*
+/assets/**
 !/dependencies/glad/
 !/dependencies/glad/**
 !/dependencies/tiny_obj_loader.h
+!/dependencies/stb_image.h
 !/dependencies/imgui/
 !/dependencies/imgui/**
+!/assets/shaders/
+!/assets/shaders/**
 imgui.ini
 **/.cache
 **/models/**
 **/.DS_Store
 **/*.zip
+**/*.ZIP

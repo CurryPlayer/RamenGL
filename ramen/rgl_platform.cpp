@@ -1,6 +1,7 @@
 #include "rgl_platform.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 bool FileExists(const char* file)
 {
@@ -32,4 +33,14 @@ File ReadFile(const char* file)
     fclose(pFileDesc);
 
     return File{ data, size };
+}
+
+File CreateFile(uint64_t numBytes)
+{
+    File result{};
+    result.data = (char*)malloc(numBytes + 1);
+    memset(result.data, 0, numBytes + 1);
+    result.m_size = numBytes + 1;
+
+    return result;
 }

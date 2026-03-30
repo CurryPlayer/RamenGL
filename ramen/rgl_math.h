@@ -36,6 +36,11 @@ struct Vec3f
         z = 0.0f;
     }
 
+    float* Data()
+    {
+        return (&x);
+    }
+
     Vec3f(const Vec4f& v4);
 
     const float operator[](const int index) const
@@ -88,6 +93,13 @@ struct Vec3f
         z *= s;
 
         return *this;
+    }
+
+    const char* ToString() const
+    {
+        static char buffer[ 128 ];
+        sprintf(buffer, "[ %.2f, %.2f, %.2f ]", x, y, z);
+        return buffer;
     }
 };
 
@@ -184,7 +196,7 @@ struct Vec4f
     const char* ToString() const
     {
         static char buffer[ 128 ];
-        sprintf(buffer, "[ %.2f, %.2f, %.2f, %.2f ]\n", x, y, z, w);
+        sprintf(buffer, "[ %.2f, %.2f, %.2f, %.2f ]", x, y, z, w);
         return buffer;
     }
 };
@@ -299,7 +311,7 @@ struct Mat4f
         *this = result;
     }
 
-    Mat4f operator*(const Mat4f& rhs)
+    const Mat4f operator*(const Mat4f& rhs) const
     {
         Mat4f result{};
         for ( int row = 0; row < 4; row++ )
@@ -352,7 +364,7 @@ struct Mat4f
     {
         static char buffer[ 256 ];
         sprintf(buffer,
-                "%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n",
+                "%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f",
                 e[ 0 ][ 0 ],
                 e[ 1 ][ 0 ],
                 e[ 2 ][ 0 ],
@@ -379,18 +391,57 @@ struct Quat
 
     const Quat operator*(const Quat& rhs) const
     {
-        return Quat{ w * rhs.w - x * rhs.x - y * rhs.y - z * rhs.z,
-                     w * rhs.x + x * rhs.w + y * rhs.z - z * rhs.y,
-                     w * rhs.y - x * rhs.z + y * rhs.w + z * rhs.x,
-                     w * rhs.z + x * rhs.y - y * rhs.x + z * rhs.w };
+        Quat q{ rhs.w * x + rhs.x * w - rhs.y * z + rhs.z * y,
+                rhs.w * y + rhs.x * z + rhs.y * w - rhs.z * x,
+                rhs.w * z - rhs.x * y + rhs.y * x + rhs.z * w,
+                rhs.w * w - rhs.x * x - rhs.y * y - rhs.z * z };
+
+        q.Normalize();
+        return q;
     }
 
-    Quat& operator/=(const float s)
+    const float Length2()
     {
-        x /= s;
-        y /= s;
-        z /= s;
-        w /= s;
+        return x * x + y * y + z * z + w * w;
+    }
+
+    const float Length()
+    {
+        return sqrt(Length2());
+    }
+
+    void Normalize()
+    {
+        float len = Length();
+        if ( len > RAMEN_EPSILON )
+        {
+            *this = *this / len;
+        }
+    }
+
+    const Quat operator/(const float& s) const
+    {
+        Quat q{ x, y, z, w };
+        if ( s < RAMEN_EPSILON )
+        {
+            return q;
+        }
+        q.x /= s;
+        q.y /= s;
+        q.z /= s;
+        q.w /= s;
+        return q;
+    }
+
+    Quat& operator/=(const float& s)
+    {
+        if ( s > RAMEN_EPSILON )
+        {
+            x /= s;
+            y /= s;
+            z /= s;
+            w /= s;
+        }
         return *this;
     }
 };
@@ -409,15 +460,15 @@ float Dot(const Vec4f& a, const Vec4f& b);
  */
 Mat4f Inverse(const Mat4f& m);
 
-/* Builds a versor from given axis and rotation angle (in degrees), given in degrees.
+/* Builds a versor (a unit quaternion) from given axis and rotation 
+ * angle (in degrees), given in degrees.
  * A versor is the expression of a rotation in a '4D rotational vector'.
- * Note that this computes a unit-quaternion.
  * Also note that mathematicians don't like it when we call Quaternions Vectors!
  */
 Quat AngleAxis(const float& x, const float& y, const float& z, const float& angleDgr);
 Quat AngleAxis(const Vec3f& v, const float& angleDgr);
 
-Mat4f AsMat4f(const Quat& qIn);
+Mat4f ToMat4f(const Quat& qIn);
 
 Mat4f LookAt(const Vec3f& position, const Vec3f& target, const Vec3f& up);
 
@@ -425,11 +476,19 @@ Mat4f LookAt(const Vec3f& position, const Vec3f& target, const Vec3f& up);
 Mat4f PerspectiveProjection(const float& fovy, const float& aspect, const float& near, const float& far);
 
 Mat4f Translate(const Vec3f& v);
+Mat4f Rotate(const Vec3f& axis, const float& angleDgr);
+void  Rotate(Mat4f& M, const Vec3f& axis, const float& angleDgr);
+Vec3f Rotate(const Quat& q, const Vec3f& v);
 
 Mat4f Scale(const Vec3f& v);
 
 void Translate(Mat4f& m, const Vec3f& v);
 
 void Scale(Mat4f& m, const Vec3f& v);
+
+#define RAMEN_WORLD_RIGHT Vec3f{ 1.0f, 0.0f, 0.0f }
+#define RAMEN_WORLD_UP Vec3f{ 0.0f, 1.0f, 0.0f }
+#define RAMEN_WORLD_FORWARD Vec3f{ 0.0f, 0.0f, 1.0f }
+#define RAMEN_CAMERA_FORWARD Vec3f{ 0.0f, 0.0f, -1.0f }
 
 #endif

@@ -11,55 +11,17 @@
 class Shader
 {
   public:
-    bool Load(const char* vertShaderFile, const char* fragShaderFile)
-    {
-        GLuint vertShader;
-        GLuint fragShader;
+    bool Load(const char* vertShaderFile, const char* fragShaderFile);
 
-        if ( !CompileShader(vertShaderFile, &vertShader, GL_VERTEX_SHADER) )
-        {
-            fprintf(stderr, "Failed to compile shader: '%s'\n", vertShaderFile);
-            return false;
-        }
-        if ( !CompileShader(fragShaderFile, &fragShader, GL_FRAGMENT_SHADER) )
-        {
-            fprintf(stderr, "Failed to compile shader: '%s'\n", fragShaderFile);
-            return false;
-        }
+    void Use();
 
-        m_Program = glCreateProgram();
-        glAttachShader(m_Program, vertShader);
-        glAttachShader(m_Program, fragShader);
-        glLinkProgram(m_Program);
-
-        glDeleteShader(vertShader);
-        glDeleteShader(fragShader);
-
-        return true;
-    }
-
-    void Use()
-    {
-        glUseProgram(m_Program);
-    }
-
-    void Delete()
-    {
-        glDeleteProgram(m_Program);
-    }
+    void Delete();
 
   private:
-    bool CompileShader(const char* shaderFilename, GLuint* shader, GLenum shaderType)
+    bool CompileShader(const File& shaderFile, GLuint* shader, GLenum shaderType)
     {
-        if ( !FileExists(shaderFilename) )
-        {
-            fprintf(stderr, "Shader file: '%s' does not exist.\n", shaderFilename);
-            return false;
-        }
-
         /* Read shader source from disk and compile. */
-        File shaderFile = ReadFile(shaderFilename);
-        *shader         = glCreateShader(shaderType);
+        *shader = glCreateShader(shaderType);
         glShaderSource(*shader, 1, &shaderFile.data, nullptr);
         glCompileShader(*shader);
         if ( !IsCompiled(*shader) )

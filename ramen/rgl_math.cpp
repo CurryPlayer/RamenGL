@@ -1,4 +1,5 @@
 #include "rgl_math.h"
+#include "rgl_defines.h"
 
 Vec3f::Vec3f(const Vec4f& v4)
 {
@@ -36,7 +37,11 @@ float Dot(const Vec3f& a, const Vec3f& b)
 Vec4f Normalize(const Vec4f& v)
 {
     float len = Length(v);
-    return v / len;
+    if ( len > RAMEN_EPSILON )
+    {
+        return v / len;
+    }
+    return v;
 }
 
 float Dot(const Vec4f& a, const Vec4f& b)
@@ -119,14 +124,15 @@ Quat AngleAxis(const Vec3f& v, const float& angleDgr)
     return AngleAxis(v.x, v.y, v.z, angleDgr);
 }
 
-Mat4f AsMat4f(const Quat& qIn)
+Mat4f ToMat4f(const Quat& qIn)
 {
-    Quat  q    = qIn;
-    float len2 = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
-    if ( fabs(len2 - 1.0f) > RAMEN_QUAT_EPSILON )
+    Quat        q    = qIn;
+    const float len2 = q.Length2();
+    if ( fabs(len2 - 1.0f) > RAMEN_EPSILON )
     {
-        q /= sqrt(len2);
+        q.Normalize();
     }
+    q.Normalize(); // FIX: Sanity check. Remove later.
 
     const float& x  = q.x;
     const float& y  = q.y;
@@ -135,27 +141,39 @@ Mat4f AsMat4f(const Quat& qIn)
     const float  x2 = x * x;
     const float  y2 = y * y;
     const float  z2 = z * z;
-    const float  w2 = w * w;
 
-    return Mat4f{ Vec4f{ 1.0f - 2.0f * y2 - 2.0f * z2, 2.0f * x * y + 2.0f * w * z, 2.0f * x * z - 2.0f * w * y, 0.0f },
+    Mat4f result{ Vec4f{ 1.0f - 2.0f * y2 - 2.0f * z2, 2.0f * x * y + 2.0f * w * z, 2.0f * x * z - 2.0f * w * y, 0.0f },
                   Vec4f{ 2.0f * x * y - 2.0f * w * z, 1.0f - 2.0f * x2 - 2.0f * z2, 2.0f * y * z + 2.0f * w * x, 0.0f },
                   Vec4f{ 2.0f * x * z + 2.0f * w * y, 2.0f * y * z - 2.0f * w * x, 1.0f - 2.0f * x2 - 2.0f * y2, 0.0f },
                   Vec4f{ 0.0f, 0.0f, 0.0f, 1.0f } };
+
+    return result;
 }
 
 Mat4f LookAt(const Vec3f& position, const Vec3f& target, const Vec3f& up)
 {
-    Vec3f t       = -position;
-    Vec3f forward = Normalize(target - position);
-    Vec3f right   = Cross(forward, Normalize(up));
-    Vec3f newUp   = Cross(right, forward);
-    Mat4f result  = Mat4f::Identity();
-    result[ 0 ]   = Vec4f{ right, 0.0f };
-    result[ 1 ]   = Vec4f{ newUp, 0.0f };
-    result[ 2 ]   = Vec4f{ -forward, 0.0f };
-    result.Transpose();
-    result[ 3 ] = Vec4f{ t, 1.0f };
-    return result;
+    Vec3f t = -position;
+    Vec3f f = Normalize(target - position);
+    Vec3f r = Normalize(Cross(f, up));
+    Vec3f u = Cross(r, f);
+    Mat4f R = Mat4f::Identity();
+    R(0, 0) = r.x;
+    R(1, 0) = r.y;
+    R(2, 0) = r.z;
+    R(0, 1) = u.x;
+    R(1, 1) = u.y;
+    R(2, 1) = u.z;
+    /* Note the flipped values of the forward vector.
+     * This does *NOT* mean, though, that this matrix
+     * is becoming left-handed.
+     */
+    R(0, 2) = -f.x;
+    R(1, 2) = -f.y;
+    R(2, 2) = -f.z;
+
+    Mat4f T = Translate(t);
+
+    return R * T;
 }
 
 /* Creates a right-handed, y-up, perspective projection matrix. */
@@ -189,6 +207,12 @@ Mat4f Translate(const Vec3f& v)
     return result;
 }
 
+void Translate(Mat4f& M, const Vec3f& v)
+{
+    const Mat4f T = Translate(v);
+    M             = T * M;
+}
+
 Mat4f Scale(const Vec3f& v)
 {
     Mat4f result = Mat4f::Identity();
@@ -199,16 +223,32 @@ Mat4f Scale(const Vec3f& v)
     return result;
 }
 
-void Translate(Mat4f& m, const Vec3f& v)
+void Scale(Mat4f& M, const Vec3f& v)
 {
-    m[ 3 ][ 0 ] += v.x;
-    m[ 3 ][ 1 ] += v.y;
-    m[ 3 ][ 2 ] += v.z;
+    const Mat4f S = Scale(v);
+    M             = S * M;
 }
 
-void Scale(Mat4f& m, const Vec3f& v)
+Mat4f Rotate(const Vec3f& axis, const float& angleDgr)
 {
-    m[ 0 ][ 0 ] *= v.x;
-    m[ 1 ][ 1 ] *= v.y;
-    m[ 2 ][ 2 ] *= v.z;
+    const Quat q = AngleAxis(axis, angleDgr);
+    return ToMat4f(q);
+}
+
+void Rotate(Mat4f& M, const Vec3f& axis, const float& angleDgr)
+{
+    const Mat4f R = Rotate(axis, angleDgr);
+    M             = R * M;
+}
+
+/* Assumes q is noramlized. */
+Vec3f Rotate(const Quat& q, const Vec3f& v)
+{
+    /* pure quaternion from vector */
+    const Quat p = Quat{ v.x, v.y, v.z, 0.0f };
+    /* conjugate */
+    const Quat cq = Quat{ -q.x, -q.y, -q.z, q.w };
+    /* pure quaternion rotated. Its components yield rotated v */
+    const Quat pp = q * p * cq;
+    return Vec3f{ pp.x, pp.y, pp.z };
 }

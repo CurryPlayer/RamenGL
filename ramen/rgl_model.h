@@ -1,11 +1,13 @@
 #ifndef RGL_MODEL_H
 #define RGL_MODEL_H
 
+#include <string>
+
 #include <glad/glad.h>
 
-#define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#include "rgl_filesystem.h"
 #include "rgl_math.h"
 #include "rgl_platform.h"
 
@@ -21,19 +23,27 @@ class Model
   public:
     bool Load(const char* file)
     {
-        if ( !FileExists(file) )
+        File modelFile = Filesystem::Instance()->Read(file);
+        if ( !modelFile.data )
         {
             return false;
         }
 
-        File              modelFile = ReadFile(file);
-        tinyobj::attrib_t attrib;
-        std::string       err;
-        bool              ret = tinyobj::LoadObj(&attrib, &m_Shapes, nullptr, &err, file, "/");
-        if ( !ret )
+        tinyobj::ObjReader       reader;
+        tinyobj::ObjReaderConfig reader_config;
+        reader_config.mtl_search_path = ""; // not needed if no MTL
+        if ( !reader.ParseFromString(std::string(modelFile.data), std::string("")) )
         {
+            if ( !reader.Error().empty() )
+            {
+                fprintf(stderr, "tinyobjloader: %s\n", reader.Error().c_str());
+            }
             return false;
+            modelFile.Destroy();
         }
+
+        const tinyobj::attrib_t& attrib = reader.GetAttrib();
+        m_Shapes                        = reader.GetShapes();
 
         printf("loaded: '%s'\n", file);
         printf("# of vertices: %d\n", (int)(attrib.vertices.size()) / 3);
@@ -50,6 +60,7 @@ class Model
                 for ( int k = 0; k < 3; k++ )
                 {
                     v.position[ k ] = attrib.vertices[ 3 * idx.vertex_index + k ];
+                    v.normal[ k ]   = attrib.normals[ 3 * idx.normal_index + k ];
                 }
                 m_Vertices.push_back(v);
             }
@@ -61,14 +72,14 @@ class Model
         return true;
     }
 
+    const std::vector<Vertex>& GetVertices() const
+    {
+        return m_Vertices;
+    }
+
     const size_t NumVertices()
     {
         return m_Vertices.size();
-    }
-
-    const std::vector<Vertex> GetVertices() const
-    {
-        return m_Vertices;
     }
 
   private:
@@ -76,4 +87,5 @@ class Model
     std::vector<tinyobj::shape_t> m_Shapes;
     std::vector<Vertex>           m_Vertices;
 };
+
 #endif

@@ -8,25 +8,28 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 add_subdirectory(./dependencies/SDL EXCLUDE_FROM_ALL)
+add_subdirectory(./dependencies/physfs/)
+add_subdirectory(./tasks_src/)
 
-add_executable(task02 
-    ./dependencies/glad/src/glad.c
-
-    ./dependencies/tiny_obj_loader.h
-    
-    ./dependencies/imgui/imgui.cpp
-    ./dependencies/imgui/imgui_impl_sdl3.cpp
-    ./dependencies/imgui/imgui_impl_opengl3.cpp
-    ./dependencies/imgui/imgui_draw.cpp
-    ./dependencies/imgui/imgui_tables.cpp
-    ./dependencies/imgui/imgui_demo.cpp
-    ./dependencies/imgui/imgui_widgets.cpp
-
-    ./ramen/rgl_math.cpp
-    ./ramen/rgl_platform.cpp
-
-    task02.cpp)
-target_include_directories(task02 PUBLIC
-    ./dependencies/glad/include
-    ./dependencies/)
-target_link_libraries(task02 PRIVATE SDL3::SDL3)
+#
+# add_executable(task01 
+#     ./dependencies/glad/src/glad.c
+#
+#     ./dependencies/tiny_obj_loader.h
+#
+#     ./dependencies/imgui/imgui.cpp
+#     ./dependencies/imgui/imgui_impl_sdl3.cpp
+#     ./dependencies/imgui/imgui_impl_opengl3.cpp
+#     ./dependencies/imgui/imgui_draw.cpp
+#     ./dependencies/imgui/imgui_tables.cpp
+#     ./dependencies/imgui/imgui_demo.cpp
+#     ./dependencies/imgui/imgui_widgets.cpp
+#
+#     ./ramen/rgl_math.cpp
+#     ./ramen/rgl_platform.cpp
+#
+#     task01.cpp)
+# target_include_directories(task01 PUBLIC
+#     ./dependencies/glad/include
+#     ./dependencies/)
+# target_link_libraries(task01 PRIVATE SDL3::SDL3)

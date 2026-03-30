@@ -1,8 +1,11 @@
 #ifndef RAMEN_H
 #define RAMEN_H
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <string>
 
 #include <glad/glad.h>
 
@@ -16,7 +19,7 @@
 class Ramen
 {
   public:
-    static Ramen* Create()
+    static Ramen* Instance()
     {
         static Ramen* theOneAndOnly;
         if ( !theOneAndOnly )
@@ -26,9 +29,8 @@ class Ramen
         return theOneAndOnly;
     }
 
-    void Init(const char* title, int windowWidth, int windowHeight)
+    void Init(const char* title, int windowWidth, int windowHeight, const char* relBaseDir = "./")
     {
-
         if ( !SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) )
         {
             SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not initialize SDL. Reason: %s\n", SDL_GetError());
@@ -119,6 +121,18 @@ class Ramen
     SDL_GLContext GetGLContext() const
     {
         return m_glContext;
+    }
+
+    void ProcessInputEvent(const SDL_Event e) const
+    {
+        if ( e.type == SDL_EVENT_KEY_DOWN )
+        {
+            printf("key down event.\n");
+        }
+        else if ( e.type == SDL_EVENT_KEY_UP )
+        {
+            printf("key up event.\n");
+        }
     }
 
   private:

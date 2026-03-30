@@ -6,14 +6,12 @@
 class Camera
 {
   public:
-    Camera(const Vec3f& position, const Vec3f& target)
+    Camera(const Vec3f& position)
     {
-        Vec3f forward  = Normalize(target - position);
         m_Position     = position;
-        m_Forward      = forward;
-        Vec3f up       = Vec3f{ 0.0f, 1.0f, 0.0f };
-        Vec3f right    = Normalize(Cross(m_Forward, up));
-        m_Up           = Normalize(Cross(right, m_Forward));
+        m_Forward      = RAMEN_CAMERA_FORWARD;
+        m_Up           = RAMEN_WORLD_UP;
+        m_Right        = RAMEN_WORLD_RIGHT;
         m_qOrientation = AngleAxis(m_Forward, 0.0f);
     }
 
@@ -38,29 +36,85 @@ class Camera
     }
 
     /* Orient camera so that it looks at target. */
-    void Orient(const Vec3f target)
+    // void Orient(const Vec3f target)
+    // {
+    //     Vec3f newForward = Normalize(target - m_Position);
+    //     Vec3f newSide    = Normalize(Cross(newForward, Vec3f{ 0.0f, 1.0f, 0.0f }));
+    //     Vec3f newUp      = Normalize(Cross(newSide, newForward));
+    //     m_qOrientation   = AngleAxis(newForward, 0.0f);
+    // }
+
+    /* NOTE: Angle is negated as the camera's forward is facing
+     * to -z and reverses the expected rotation direction (CCW)
+     * in worldspace. So, in order to transform the camera
+     * like other objects in the world (via a model matrix)
+     * this adjustment is being made to the angle.
+     */
+    void RotateAroundWorldUp(const float& angle)
     {
-        Vec3f newForward = Normalize(target - m_Position);
-        Vec3f newSide    = Normalize(Cross(newForward, Vec3f{ 0.0f, 1.0f, 0.0f }));
-        Vec3f newUp      = Normalize(Cross(newSide, newForward));
-        m_qOrientation   = AngleAxis(newForward, 0.0f);
+        Quat q         = AngleAxis(RAMEN_WORLD_UP, -angle);
+        m_qOrientation = q * m_qOrientation;
+        m_qOrientation.Normalize();
+        m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
+        m_Up      = Rotate(m_qOrientation, RAMEN_WORLD_UP);
+        m_Right   = Rotate(m_qOrientation, RAMEN_WORLD_RIGHT);
     }
 
     void RotateAroundUp(const float& angle)
     {
-        Quat qRot      = AngleAxis(Normalize(m_Up), angle);
-        m_qOrientation = qRot * m_qOrientation;
-        Mat4f rotMat   = AsMat4f(qRot);
-        m_Forward
-            = Vec3f{ rotMat
-                     * Vec4f{ 0.0f, 0.0f, -1.0f, 0.0f } }; // TODO: Create 3x3 rotation matrix to avoid conversions.
-        m_Up = Vec3f{ rotMat * Vec4f{ 0.0f, 1.0f, 0.0f, 0.0f } };
+        Quat q         = AngleAxis(m_Up, -angle);
+        m_qOrientation = q * m_qOrientation;
+        m_qOrientation.Normalize();
+        m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
+        m_Right   = Rotate(m_qOrientation, RAMEN_WORLD_RIGHT);
+    }
+
+    void RotateAroundSide(const float& angle)
+    {
+        Quat q         = AngleAxis(GetRight(), -angle);
+        m_qOrientation = q * m_qOrientation;
+        m_qOrientation.Normalize();
+        m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
+        m_Up      = Rotate(m_qOrientation, RAMEN_WORLD_UP);
+    }
+
+    void RotateAroundSide(const Quat& q)
+    {
+        m_qOrientation = q * m_qOrientation;
+        m_qOrientation.Normalize();
+        m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
+        m_Up      = Rotate(m_qOrientation, RAMEN_WORLD_UP);
+    }
+
+    void RotateAroundForward(const float& angle)
+    {
+        Quat q         = AngleAxis(m_Forward, angle);
+        m_qOrientation = q * m_qOrientation;
+        m_qOrientation.Normalize();
+        m_Up    = Rotate(m_qOrientation, RAMEN_WORLD_UP);
+        m_Right = Rotate(m_qOrientation, RAMEN_WORLD_RIGHT);
+    }
+
+    void Roll(const float& angle)
+    {
+        RotateAroundForward(angle);
+    }
+
+    void Pitch(const float& angle)
+    {
+        RotateAroundSide(angle);
+    }
+
+    void Yaw(const float& angle)
+    {
+        RotateAroundUp(angle);
     }
 
   private:
     Vec3f m_Position;
     Vec3f m_Forward;
     Vec3f m_Up;
+    Vec3f m_Right;
     Quat  m_qOrientation;
 };
 
