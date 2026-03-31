@@ -7,12 +7,12 @@ Clonen Sie das aktuelle Rahmenprogramm aus GitLab.
 einige Annahmen aus task02. Clonen Sie das Rahmenprogramm deshalb
 unbedingt neu, damit Sie aus task02 nichts kaputt machen.**
 
-Nutzen Sie das Sourcefile `task03.cpp` um die Aufgaben zu implementiern.
+Nutzen Sie das Sourcefile `task03.cpp` um die Aufgaben zu implementieren.
 Kompilieren Sie es zunächst und testen Sie, ob es sich starten lässt
 und Sie ein Koordinatensystem sehen.
 
 ## 3.1) Nutzen der Farbattribute.
-Alle drei Achsen des Koordinatensystem werden im Moment in rot
+Alle drei Achsen des Koordinatensystems werden im Moment in rot
 gerendert. Erweitern Sie das Programm, sodass der Vertexshader
 das Farbattribut der Vertices erhält. Erweitern Sie den Shadercode
 ebenfalls, damit diese Farbattribute an den Fragmentshader weitergereicht
@@ -27,17 +27,18 @@ der Farbe entgegennehmen. Beispiel:
 std::vector<Vertex> CreateCylinder(const Vec3f& color);
 ```
 **Achtung**: Vergessen Sie nicht, sinnvolle Normalenvektoren
-zu erzeugen.
+zu erzeugen. Sie dürfen Normalenvektoren erzeugen, die perfekt
+senkrecht auf die Polygone stehen.
 
 ## 3.3) Rendern der Geometrie
 Testen Sie Ihre geometrischen Körper, indem Sie diese rendern.
 Das Hochladen der Daten auf die GPU und das Rendern erfolgt wie
-schon in Taks 02. 
+schon in Tasks 02. 
 
 ## 3.4) Debugging der Normalenvektoren
 Wie testen Sie, ob Ihre Normalenvektoren korrekt sind und auch korrekt
-im Shader sind? Nutzen Sie mindesten zwei Möglichkeiten.
-Dokumentieren Sie Ihr vorgehen.
+im Shader sind? Nutzen Sie mindestens zwei Möglichkeiten.
+Dokumentieren Sie Ihr Vorgehen.
 
 ## 3.5) Beleuchtung
 Im Moment ist die Szene noch sehr flach, da kein Beleuchtungsmodell
@@ -52,14 +53,14 @@ eine geeignete mathematische Lösung her.
 ## 3.6) Bewegung der Kamera
 Erweitern Sie das Programm, sodass Sie die Kamera mit 
 der Tastatur steuern können. Sie sollten in der Lage sein,
-die Kamera entlang ihrer Achsen zu verschieben und zu rotierern.
+die Kamera entlang ihrer Achsen zu verschieben und zu rotieren.
 
 ## 3.7) Matrizen-Stack
 Bauen Sie eine animierte Szene mithilfe eines Matrizenstapels und
 den von Ihnen erstellten primitiven Körpern. Natürlich dürfen Sie
 weitere geometrische Körper erstellen, falls Sie diese für
 Ihre Szene benötigen (beispielsweise einen Kegel).  
-Implementieren Sie hierzu am besten ein Klasse, welche die 
+Implementieren Sie hierzu am besten eine Klasse, welche die 
 Methoden aus der Vorlesung zur Verfügung stellt.
 
 Beispiel
@@ -99,7 +100,7 @@ while ( isRunning )
     endCounter = SDL_GetPerformanceCounter();
 }
 ```
-Sebstverstädnlich können Sie auch Funktionen aus der C++ Standardbibliothek
+Selbstverständlich können Sie auch Funktionen aus der C++ Standardbibliothek
 nutzen, wenn Ihnen das lieber ist.
 
 ## 3.8) Ship It.
