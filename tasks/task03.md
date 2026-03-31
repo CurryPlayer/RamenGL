@@ -53,7 +53,68 @@ eine geeignete mathematische Lösung her.
 ## 3.6) Bewegung der Kamera
 Erweitern Sie das Programm, sodass Sie die Kamera mit 
 der Tastatur steuern können. Sie sollten in der Lage sein,
-die Kamera entlang ihrer Achsen zu verschieben und zu rotieren.
+die Kamera entlang ihrer Achsen zu verschieben und um einen Winkel zu rotieren.
+Nutzen Sie für die Tastaturabfrage das Gerüst in der Eventloop und
+die Funktionalität von SDL3.  
+Beispiel:
+```c
+
+while ( isRunning )
+{
+    SDL_Event e;
+    while ( SDL_PollEvent(&e) )
+    {
+        ImGui_ImplSDL3_ProcessEvent(&e);
+        pRamen->ProcessInputEvent(e);
+
+        if ( e.type == SDL_EVENT_QUIT )
+        {
+            isRunning = false;
+        }
+
+        if ( e.type == SDL_EVENT_KEY_DOWN )
+        {
+            switch ( e.key.key )
+            {
+            case SDLK_ESCAPE:
+            {
+                isRunning = false;
+            }
+            break;
+
+            /* Camera movement */
+            case SDLK_UP:
+            {
+                /* TODO: Pitch camera */
+            }
+            break;
+            case SDLK_DOWN:
+            {
+                /* TODO: Pitch camera */
+            }
+            break;
+
+            /* TODO: also implement camera Yaw and Roll */
+
+            default:
+            {
+            }
+            }
+        }
+    }
+    
+    // ...
+    // set uniforms, rendering, etc.
+    // ...
+
+}
+```
+Dokumentieren Sie welches Winkelvorzeichen die Kamera in welche Richtung
+rotieren bzw. verschiebt. Erklären Sie warum die Kamera sich so verhält.  
+
+**Hinweis**: Die Kameraklasse aus `rgl_camera.h` hält bereits einige
+Methoden parat mit der Sie die Kamera im Raum bewegen und rotieren
+können ;)
 
 ## 3.7) Matrizen-Stack
 Bauen Sie eine animierte Szene mithilfe eines Matrizenstapels und
