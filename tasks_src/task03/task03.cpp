@@ -63,6 +63,10 @@ int main(int argc, char** argv)
     glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
     glEnableVertexArrayAttrib(VAO, 1);
     glVertexArrayAttribBinding(VAO, 1, 0);
+    /* Color */
+    glVertexArrayAttribFormat(VAO, 2, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float));
+    glEnableVertexArrayAttrib(VAO, 2);
+    glVertexArrayAttribBinding(VAO, 2, 0);
 
     /* Some global GL states */
     glEnable(GL_DEPTH_TEST);
