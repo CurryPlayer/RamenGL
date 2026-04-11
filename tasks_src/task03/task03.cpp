@@ -28,6 +28,7 @@
 std::vector<Vertex> CreateCube(const Vec3f& color);
 std::vector<Vertex> CreateCylinder(const Vec3f& color, int slices = 16);
 std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks = 16, int slices = 16);
+std::vector<Vertex> CreateNormalLines(const std::vector<Vertex>& vertices, float lineLength = 0.1f, bool drawNormals = true);
 
 std::vector<Vertex> CreateCube(const Vec3f& color) {
     std::vector<Vertex> vertices;
@@ -147,6 +148,19 @@ std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks, int slices) {
     return vertices;
 }
 
+std::vector<Vertex> CreateNormalLines(const std::vector<Vertex>& vertices, float lineLength, bool drawNormals) {
+    std::vector<Vertex> lines;
+    if (!drawNormals) return lines;
+
+    for (const auto& v : vertices) {
+        Vec3f start = v.position;
+        Vec3f end = v.position + v.normal * lineLength;
+        lines.push_back({start, {0, 0, 0}, {1, 1, 1}});
+        lines.push_back({end, {0, 0, 0}, {1, 1, 1}});
+    }
+    return lines;
+}
+
 int main(int argc, char** argv)
 {
     Filesystem* pFS = Filesystem::Init(argc, argv, "assets");
@@ -164,6 +178,9 @@ int main(int argc, char** argv)
     /* Create camera */
     Camera camera(Vec3f{ 0.0f, 2.0f, 3.0f });
     camera.RotateAroundSide(-10.0f);
+
+    /* show normal vectors */
+    bool showNormals = false;
 
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
@@ -223,6 +240,16 @@ int main(int argc, char** argv)
     std::vector<Vertex> sphereVertices = CreateSphere({0.0f, 0.0f, 1.0f}); // Blue
     auto [VAO_Sphere, VBO_Sphere] = CreateGeometryBuffers(sphereVertices);
 
+    /* Create normal lines */
+    std::vector<Vertex> cubeNormals = CreateNormalLines(cubeVertices);
+    auto [VAO_CubeNormals, VBO_CubeNormals] = CreateGeometryBuffers(cubeNormals);
+
+    std::vector<Vertex> cylinderNormals = CreateNormalLines(cylinderVertices);
+    auto [VAO_CylinderNormals, VBO_CylinderNormals] = CreateGeometryBuffers(cylinderNormals);
+
+    std::vector<Vertex> sphereNormals = CreateNormalLines(sphereVertices);
+    auto [VAO_SphereNormals, VBO_SphereNormals] = CreateGeometryBuffers(sphereNormals);
+
     /* Some global GL states */
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -255,6 +282,12 @@ int main(int argc, char** argv)
                 case SDLK_ESCAPE:
                 {
                     isRunning = false;
+                }
+                break;
+                /* active / deactivate normals with 'N' */
+                case SDLK_N:
+                {
+                    showNormals = !showNormals;
                 }
                 break;
 
@@ -327,6 +360,30 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sphereVertices.size());
 
+        if (showNormals)
+        {
+            /* Render cube normals */
+            glBindVertexArray(VAO_CubeNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, cubeMat.Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
+
+            /* Render cylinder normals */
+            glBindVertexArray(VAO_CylinderNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, cylinderMat.Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)cylinderNormals.size());
+
+            /* Render sphere normals */
+            glBindVertexArray(VAO_SphereNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, sphereMat.Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)sphereNormals.size());
+        }
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         SDL_GL_SwapWindow(pRamen->GetWindow());
@@ -342,6 +399,14 @@ int main(int argc, char** argv)
     glDeleteVertexArrays(1, &VAO_Cylinder);
     glDeleteBuffers(1, &VBO_Sphere);
     glDeleteVertexArrays(1, &VAO_Sphere);
+
+    /* Normal lines */
+    glDeleteBuffers(1, &VBO_CubeNormals);
+    glDeleteVertexArrays(1, &VAO_CubeNormals);
+    glDeleteBuffers(1, &VBO_CylinderNormals);
+    glDeleteVertexArrays(1, &VAO_CylinderNormals);
+    glDeleteBuffers(1, &VBO_SphereNormals);
+    glDeleteVertexArrays(1, &VAO_SphereNormals);
 
     /* Ramen Shutdown */
     pRamen->Shutdown();
