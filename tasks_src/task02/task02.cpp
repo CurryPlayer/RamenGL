@@ -42,8 +42,35 @@ int main(int argc, char** argv)
         fprintf(stderr, "Could not load model file.\n");
     }
 
-    // TODO: Create vertex layout via VAO.
-    // TODO: Create a buffer on GPU and upload the model's vertices.
+    // -> Create vertex layout via VAO
+    GLuint vao;
+    glCreateVertexArrays(1, &vao);
+
+    // -> Create a buffer on GPU and upload the model's vertices
+    GLuint vbo;
+    glCreateBuffers(1, &vbo);
+
+    // -> Upload data
+    const std::vector<Vertex>& vertices = model.GetVertices();
+    const auto bufferSize = static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex));
+
+    // -> Allocate buffer data first
+    glNamedBufferData(vbo, bufferSize, nullptr, GL_STATIC_DRAW);
+
+    // -> Use glNamedBufferSubData as requested by task02.md
+    glNamedBufferSubData(vbo, 0, bufferSize, vertices.data());
+
+    // -> Bind VBO to VAO
+    // -> The vertex buffer binding index is 0
+    glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(Vertex));
+
+    // Setup vertex attributes for position, normal, color.
+    // From rgl_model.h, Vertex has Vec3f position, normal, color.
+
+    // -> Position (attribute 0)
+    glEnableVertexArrayAttrib(vao, 0);
+    glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+    glVertexArrayAttribBinding(vao, 0, 0);
 
     /* Create camera */
     Camera camera(Vec3f{ 0.0f, 0.0f, 20.0f });
@@ -124,13 +151,15 @@ int main(int argc, char** argv)
 
         shader.Use();
 
-        // TODO: Activate VAO.
+        // Activate VAO.
+        glBindVertexArray(vao);
 
         glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
 
-        // TODO: Draw the model.
+        // Draw the model.
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.NumVertices()));
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -140,7 +169,9 @@ int main(int argc, char** argv)
     /* GL Resources shutdown. */
     shader.Delete();
 
-    // TODO: Delete OpenGL Resources you created (VAO, VBO).
+    // Delete OpenGL Resources (VAO, VBO).
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
 
     /* Ramen Shutdown */
     pRamen->Shutdown();
