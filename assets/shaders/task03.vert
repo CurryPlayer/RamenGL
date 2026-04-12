@@ -23,4 +23,6 @@ void main()
     vec4 position = u_ProjMat * u_ViewMat * u_ModelMat * vec4(in_Position, 1.0f);
     gl_Position = position;
     out_Color = in_Color;
+    out_Normal = in_Normal; // for Debugging: forward normals
+    out_ViewSpacePos = (u_ViewMat * u_ModelMat * vec4(in_Position, 1.0f)).xyz; // position in View-Space
 }
