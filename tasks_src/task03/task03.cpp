@@ -179,8 +179,14 @@ int main(int argc, char** argv)
     Camera camera(Vec3f{ 0.0f, 2.0f, 3.0f });
     camera.RotateAroundSide(-10.0f);
 
+    // ####################################
+    // ### Task 3.4 (Debugging normals) ###
+    // ####################################
     /* show normal vectors */
     bool showNormals = false;
+    /* debug normals as colors */
+    bool debugNormalsAsColors = false;
+    // ####################################
 
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
@@ -290,6 +296,12 @@ int main(int argc, char** argv)
                     showNormals = !showNormals;
                 }
                 break;
+                /* active / deactivate normals as colors with 'C' */
+                case SDLK_C:
+                {
+                    debugNormalsAsColors = !debugNormalsAsColors;
+                }
+                break;
 
                 default:
                 {
@@ -326,6 +338,14 @@ int main(int argc, char** argv)
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
 
         shader.Use();
+
+        // ####################################
+        // ### Task 3.4 (Debugging normals) ###
+        // ####################################
+        // in task03.vert -> layout(location = 3) uniform bool u_DebugNormals;
+        /* Set debug normals uniform */
+        glUniform1i(99, debugNormalsAsColors ? 1 : 0);
+        // ####################################
 
         /* Render coordinate system at origin */
         glBindVertexArray(VAO_CoordSystem);
