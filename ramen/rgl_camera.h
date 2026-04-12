@@ -110,6 +110,11 @@ class Camera
         RotateAroundUp(angle);
     }
 
+    void Translate(const Vec3f& delta)
+    {
+        m_Position = m_Position + delta;
+    }
+
   private:
     Vec3f m_Position;
     Vec3f m_Forward;

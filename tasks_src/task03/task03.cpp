@@ -311,6 +311,67 @@ int main(int argc, char** argv)
                     debugNormalsAsColors = !debugNormalsAsColors;
                 }
                 break;
+                /* Camera movement */
+                case SDLK_W:
+                {
+                    camera.Translate(camera.GetForward() * 0.1f);
+                }
+                break;
+                case SDLK_S:
+                {
+                    camera.Translate(-camera.GetForward() * 0.1f);
+                }
+                break;
+                case SDLK_A:
+                {
+                    camera.Translate(-camera.GetRight() * 0.1f);
+                }
+                break;
+                case SDLK_D:
+                {
+                    camera.Translate(camera.GetRight() * 0.1f);
+                }
+                break;
+                case SDLK_Q:
+                {
+                    camera.Translate(camera.GetUp() * 0.1f);
+                }
+                break;
+                case SDLK_E:
+                {
+                    camera.Translate(-camera.GetUp() * 0.1f);
+                }
+                break;
+                case SDLK_UP:
+                {
+                    camera.Pitch(1.0f);
+                }
+                break;
+                case SDLK_DOWN:
+                {
+                    camera.Pitch(-1.0f);
+                }
+                break;
+                case SDLK_LEFT:
+                {
+                    camera.Yaw(1.0f);
+                }
+                break;
+                case SDLK_RIGHT:
+                {
+                    camera.Yaw(-1.0f);
+                }
+                break;
+                case SDLK_PAGEUP:
+                {
+                    camera.Roll(1.0f);
+                }
+                break;
+                case SDLK_PAGEDOWN:
+                {
+                    camera.Roll(-1.0f);
+                }
+                break;
 
                 default:
                 {
