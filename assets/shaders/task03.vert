@@ -23,6 +23,14 @@ void main()
     vec4 position = u_ProjMat * u_ViewMat * u_ModelMat * vec4(in_Position, 1.0f);
     gl_Position = position;
     out_Color = in_Color;
-    out_Normal = in_Normal; // for Debugging: forward normals
+
+    // without normalization, the normal vector would be scaled by the model-view matrix, which could lead to incorrect lighting calculations.
+    //out_Normal = in_Normal;
+
+    // in_Normal and in_Position are in object space, so we need to transform it to view space.
+    // Transform normals correctly: use inverse transpose of model-view matrix
+    mat3 normalMatrix = mat3(transpose(inverse(u_ViewMat * u_ModelMat)));
+    out_Normal = normalize(normalMatrix * in_Normal);
+
     out_ViewSpacePos = (u_ViewMat * u_ModelMat * vec4(in_Position, 1.0f)).xyz; // position in View-Space
 }

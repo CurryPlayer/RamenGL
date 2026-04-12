@@ -188,6 +188,15 @@ int main(int argc, char** argv)
     bool debugNormalsAsColors = false;
     // ####################################
 
+    // ####################################
+    // ### Task 3.5 (Lighting) ###
+    // ####################################
+    /* Light properties */
+    const auto lightPosition = Vec3f{2.0f, 2.0f, 2.0f}; // Light position in world space
+    const auto lightColor = Vec3f{1.0f, 1.0f, 1.0f};    // White light
+    const auto ambientColor = Vec3f{0.1f, 0.1f, 0.1f};  // Dim ambient light
+    // ####################################
+
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
 
@@ -345,6 +354,16 @@ int main(int argc, char** argv)
         // in task03.vert -> layout(location = 3) uniform bool u_DebugNormals;
         /* Set debug normals uniform */
         glUniform1i(99, debugNormalsAsColors ? 1 : 0);
+        // ####################################
+
+        // ####################################
+        // ### Task 3.5 (Lighting) ###
+        // ####################################
+        // Transform light position to view space
+        Vec4f lightPosView = viewMat * Vec4f{lightPosition.x, lightPosition.y, lightPosition.z, 1.0f};
+        glUniform3f(4, lightPosView.x, lightPosView.y, lightPosView.z); // u_LightPosition
+        glUniform3f(5, lightColor.x, lightColor.y, lightColor.z);      // u_LightColor
+        glUniform3f(6, ambientColor.x, ambientColor.y, ambientColor.z); // u_AmbientColor
         // ####################################
 
         /* Render coordinate system at origin */
