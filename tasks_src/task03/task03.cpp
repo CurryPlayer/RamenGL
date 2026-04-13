@@ -28,6 +28,7 @@
 std::vector<Vertex> CreateCube(const Vec3f& color);
 std::vector<Vertex> CreateCylinder(const Vec3f& color, int slices = 16);
 std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks = 16, int slices = 16);
+std::vector<Vertex> CreateCone(const Vec3f& color, int slices = 16);
 std::vector<Vertex> CreateNormalLines(const std::vector<Vertex>& vertices, float lineLength = 0.1f, bool drawNormals = true);
 
 std::vector<Vertex> CreateCube(const Vec3f& color) {
@@ -148,6 +149,48 @@ std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks, int slices) {
     return vertices;
 }
 
+std::vector<Vertex> CreateCone(const Vec3f& color, const int slices) {
+    std::vector<Vertex> vertices;
+    constexpr float height = 1.0f;
+    constexpr float radius = 0.5f;
+
+    const Vec3f apex = {0.0f, height / 2.0f, 0.0f};
+    const Vec3f baseCenter = {0.0f, -height / 2.0f, 0.0f};
+
+    // 1. Base (Boden)
+    for (int i = 0; i < slices; i++) {
+        const float angle = 2.0f * RAMEN_PI * i / slices;
+        const float nextAngle = 2.0f * RAMEN_PI * (i + 1) / slices;
+
+        const Vec3f p2 = {radius * cosf(angle), -height / 2.0f, radius * sinf(angle)};
+        const Vec3f p3 = {radius * cosf(nextAngle), -height / 2.0f, radius * sinf(nextAngle)};
+
+        vertices.push_back({baseCenter, {0, -1, 0}, color});
+        vertices.push_back({p2, {0, -1, 0}, color});
+        vertices.push_back({p3, {0, -1, 0}, color});
+    }
+
+    // 2. Sides (Mantelfläche)
+    for (int i = 0; i < slices; i++) {
+        const float angle = 2.0f * RAMEN_PI * i / slices;
+        const float nextAngle = 2.0f * RAMEN_PI * (i + 1) / slices;
+
+        // Die zwei Punkte auf dem äußeren Rand des Bodens
+        const Vec3f p1 = {radius * cosf(angle), -height / 2.0f, radius * sinf(angle)};
+        const Vec3f p2 = {radius * cosf(nextAngle), -height / 2.0f, radius * sinf(nextAngle)};
+
+        // Die Normale für die schräge Seite berechnen.
+        const Vec3f n = Normalize(Cross(p2 - p1, apex - p1)) * -1.0f;
+
+        // Ein Dreieck pro Slice: Von Punkt 2, zu Punkt 1, hoch zur Spitze
+        vertices.push_back({p2, n, color});
+        vertices.push_back({p1, n, color});
+        vertices.push_back({apex, n, color});
+    }
+
+    return vertices;
+}
+
 std::vector<Vertex> CreateNormalLines(const std::vector<Vertex>& vertices, float lineLength, bool drawNormals) {
     std::vector<Vertex> lines;
     if (!drawNormals) return lines;
@@ -255,6 +298,9 @@ int main(int argc, char** argv)
     std::vector<Vertex> sphereVertices = CreateSphere({0.0f, 0.0f, 1.0f}); // Blue
     auto [VAO_Sphere, VBO_Sphere] = CreateGeometryBuffers(sphereVertices);
 
+    std::vector<Vertex> coneVertices = CreateCone({0.5f, 0.5f, 0.0f}); // Yellow
+    auto [VAO_Cone, VBO_Cone] = CreateGeometryBuffers(coneVertices);
+
     /* Create normal lines */
     std::vector<Vertex> cubeNormals = CreateNormalLines(cubeVertices);
     auto [VAO_CubeNormals, VBO_CubeNormals] = CreateGeometryBuffers(cubeNormals);
@@ -264,6 +310,9 @@ int main(int argc, char** argv)
 
     std::vector<Vertex> sphereNormals = CreateNormalLines(sphereVertices);
     auto [VAO_SphereNormals, VBO_SphereNormals] = CreateGeometryBuffers(sphereNormals);
+
+    std::vector<Vertex> coneNormals = CreateNormalLines(coneVertices);
+    auto [VAO_ConeNormals, VBO_ConeNormals] = CreateGeometryBuffers(coneNormals);
 
     /* Some global GL states */
     glEnable(GL_DEPTH_TEST);
@@ -460,6 +509,14 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sphereVertices.size());
 
+        /* Render cone (yellow) */
+        glBindVertexArray(VAO_Cone);
+        Mat4f coneMat = Translate(Vec3f{3.0f, 0.0f, 0.0f});
+        glUniformMatrix4fv(0, 1, GL_FALSE, coneMat.Data());
+        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)coneVertices.size());
+
         if (showNormals)
         {
             /* Render cube normals */
@@ -482,6 +539,13 @@ int main(int argc, char** argv)
             glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
             glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
             glDrawArrays(GL_LINES, 0, (GLsizei)sphereNormals.size());
+
+            /* Render cone normals */
+            glBindVertexArray(VAO_ConeNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, coneMat.Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)coneNormals.size());
         }
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -499,6 +563,8 @@ int main(int argc, char** argv)
     glDeleteVertexArrays(1, &VAO_Cylinder);
     glDeleteBuffers(1, &VBO_Sphere);
     glDeleteVertexArrays(1, &VAO_Sphere);
+    glDeleteBuffers(1, &VBO_Cone);
+    glDeleteVertexArrays(1, &VAO_Cone);
 
     /* Normal lines */
     glDeleteBuffers(1, &VBO_CubeNormals);
@@ -507,6 +573,8 @@ int main(int argc, char** argv)
     glDeleteVertexArrays(1, &VAO_CylinderNormals);
     glDeleteBuffers(1, &VBO_SphereNormals);
     glDeleteVertexArrays(1, &VAO_SphereNormals);
+    glDeleteBuffers(1, &VBO_ConeNormals);
+    glDeleteVertexArrays(1, &VAO_ConeNormals);
 
     /* Ramen Shutdown */
     pRamen->Shutdown();
