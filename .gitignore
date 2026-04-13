@@ -5,6 +5,7 @@
 !/dependencies/glad/
 !/dependencies/glad/**
 !/dependencies/tinyobjloader/
+!/dependencies/meg_md2.h
 !/dependencies/stb_image.h
 !/dependencies/imgui/
 !/dependencies/imgui/**
