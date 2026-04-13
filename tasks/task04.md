@@ -19,21 +19,17 @@ aus, damit Sie die neuen Assets bekommen.
 
 Das Fenster sollte sich öffnen, Sie sehen allerdings noch keine Grafik.
 
-## 4.1) Erstellen eines Quads
-Erstellen Sie die Vertices (und Indices, falls Sie indiziertes Rendering
-nutzen) für einen 'Quad' in der xy-Ebene. Ein Quad beschreibt ein einfaches
-Quadrat in 3D. Bauen Sie dieses aus zwei Dreiecken zusammen.
-Versuchen Sie zunächst die Geometrie zu rendern. Der Shader ist so eingestellt,
-dass die Polygone in rot gerendert werden.
-
-## 4.2) Hinzufügen von Texturkoordinaten
-Weisen Sie ihren Quad-Vertices nun Texturkoordinaten zu, sodass die vier
+## 4.1) Hinzufügen von Texturkoordinaten zu einem 'Quad'
+In `task04.cpp` sind bereits Vertices und Indices für einen 'Quad'
+beschrieben. Ein Quad besteht aus zwei dreiseitigen Polygonen, die
+in derselben Ebene liegen. Jede Seite ist gleich lang (ein Quadrat in 3D).
+Weisen Sie ihren Quad-Vertices Texturkoordinaten zu, sodass die vier
 Eckpunkte eines quadratischen Bildes den Vertices zugeordnet werden.
 Nutzen Sie `Vec3f`s für die Texturkoordinaten, auch wenn Sie nur zwei
 Komponenten benötigen! Der Grund dafür wird in einer späteren Aufgabe
 ersichtlich.
 
-## 4.3) Erstellen einer OpenGL Textur auf der GPU
+## 4.2) Erstellen einer OpenGL Textur auf der GPU
 Nutzen Sie folgenden code, um aus dem geladenen Bild (bereits in `task04.cpp`
 implementiert) eine OpenGL-Textur zu erstellen:
 ```cpp
@@ -50,12 +46,12 @@ glTextureSubImage2D(
 Finden Sie heraus, was die einzelnen Befehle bewirken und nehmen Sie
 die Erkenntnisse in Ihre Dokumentation mit auf.
 
-## 4.4) Zugänglich machen der Texturkoordinaten im Shader
+## 4.3) Zugänglich machen der Texturkoordinaten im Shader
 'Verdrahten' Sie nun das Texturkoordinaten-Attribut ihrem VAO zu, sodass
 die Texturkoordinaten im Shader verfügbar werden. Ermöglichen Sie ausserdem
 die Weiterleitung der Texturkoordinaten aus dem Vertex- in den Fragmentshader.
 
-## 4.5) Samplen der OpenGL Textur im Fragment-Shader
+## 4.4) Samplen der OpenGL Textur im Fragment-Shader
 Nun müssen Sie noch mithilfe der Texturkoordinaten und der OpenGL-Textur
 im Shader die Fragmente mit den Pixeln der Textur versehen.
 Fügen Sie Fragment-Shader diese Zeile hinzu:
@@ -82,7 +78,7 @@ und einen Weg, dies zu ändern. Aber auch, wenn das Bild nicht
 auf dem Kopf steht, versuchen Sie zu verstehen, warum es passt.
 Nehmen Sie die Erkenntnisse in Ihre Dokumentation mit auf.
 
-## 4.6) Texturkoordinaten für die Kugel erstellen
+## 4.5) Texturkoordinaten für die Kugel erstellen
 Nutzen Sie die Kugel, die Sie in task03 erstellt haben und
 weisen Sie dieser so Texturkoordinaten zu, sodass sich ein
 Weltkarte auf diese 'mappen' lässt. Verfahren Sie dann mit dem
