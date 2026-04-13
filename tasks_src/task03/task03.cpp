@@ -53,17 +53,17 @@ std::vector<Vertex> CreateCube(const Vec3f& color) {
     };
     const int indices[36] = {
         // front
-        0, 1, 2, 0, 2, 3,
+        0, 2, 1, 2, 0, 3,
         // back
-        5, 4, 7, 5, 7, 6,
+        5, 7, 4, 7, 5, 6,
         // left
-        4, 0, 3, 4, 3, 7,
+        4, 3, 0, 3, 4, 7,
         // right
-        1, 5, 6, 1, 6, 2,
+        1, 6, 5, 6, 1, 2,
         // bottom
-        4, 5, 1, 4, 1, 0,
+        4, 1, 5, 1, 4, 0,
         // top
-        3, 2, 6, 3, 6, 7
+        3, 6, 2, 6, 3, 7
     };
     for (int i = 0; i < 36; i++) {
         Vertex v;
