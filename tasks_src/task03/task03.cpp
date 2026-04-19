@@ -24,6 +24,7 @@
 #include "../ramen/rgl_model.h"
 #include "../ramen/rgl_shader.h"
 #include "../ramen/rgl_utils.h"
+#include "matrix_stack.h"
 
 std::vector<Vertex> CreateCube(const Vec3f& color);
 std::vector<Vertex> CreateCylinder(const Vec3f& color, int slices = 16);
@@ -242,6 +243,7 @@ int main(int argc, char** argv)
 
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
+    MatrixStack matrix_stack = MatrixStack();
 
     /* Helper function to create VBO and VAO from vertices */
     auto CreateGeometryBuffers = [](const std::vector<Vertex>& vertices) {
@@ -325,8 +327,18 @@ int main(int argc, char** argv)
     /* Main loop */
     bool isRunning = true;
     SDL_GL_SetSwapInterval(1); /* 1 = VSync enabled; 0 = VSync disabled */
+
+    /* For animation timing */
+    Uint64 ticksPerSecond = SDL_GetPerformanceFrequency();
+    Uint64 startCounter = SDL_GetPerformanceCounter();
+    float totalTime = 0.0f;
+
     while ( isRunning )
     {
+        Uint64 now = SDL_GetPerformanceCounter();
+        double deltaTime = static_cast<double>(now - startCounter) / static_cast<double>(ticksPerSecond);
+        startCounter = now;
+        totalTime += static_cast<float>(deltaTime); // sum up the time
 
         SDL_Event e;
         while ( SDL_PollEvent(&e) )
@@ -482,71 +494,106 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(0, 1, GL_FALSE, coordSysMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-
         glDrawArrays(GL_LINES, 0, 6);
 
-        /* Render cube (red) */
-        glBindVertexArray(VAO_Cube);
-        Mat4f cubeMat = Translate(Vec3f{-1.5f, 0.0f, 0.0f});
-        glUniformMatrix4fv(0, 1, GL_FALSE, cubeMat.Data());
-        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
+        // ####################################
+        // ### Task 3.7 (Matrix Stack Animation) ###
+        // ####################################
+        matrix_stack = MatrixStack(); // Reset stack
 
-        /* Render cylinder (green) */
+        // keep origin at 0,0,0
+        matrix_stack.push();
+
+        // 1. Base cylinder
+        float rotationSpeed = 45.0f; // 45 Grad pro Sekunde
+        matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * rotationSpeed);
         glBindVertexArray(VAO_Cylinder);
-        Mat4f cylinderMat = Mat4f::Identity();
-        glUniformMatrix4fv(0, 1, GL_FALSE, cylinderMat.Data());
+        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cylinderVertices.size());
 
-        /* Render sphere (blue) */
+        if (showNormals)
+        {
+            /* Render cylinder normals */
+            glBindVertexArray(VAO_CylinderNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)cylinderNormals.size());
+        }
+
+        // cube
+        matrix_stack.push();
+        matrix_stack.translate(Vec3f{-5.0f, 0.0f, 0.0f});
+        matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * -180.0f);
+        matrix_stack.scale(Vec3f{0.2f, 1.0f, 0.2f});
+        glBindVertexArray(VAO_Cube);
+        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
+
+        if (showNormals)
+        {
+            /* Render cube normals */
+            glBindVertexArray(VAO_CubeNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
+        }
+
+        // sphere
+        matrix_stack.push();
+        matrix_stack.scale(Vec3f{5.0f, 1.0f, 5.0f});
+        matrix_stack.translate(Vec3f{0.1f, 0.1f, 0.1f});
+        matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * 45.0f);
+        matrix_stack.rotate(RAMEN_WORLD_RIGHT, totalTime * 45.0f);
+        matrix_stack.rotate(RAMEN_WORLD_FORWARD, totalTime * 45.0f);
         glBindVertexArray(VAO_Sphere);
-        Mat4f sphereMat = Translate(Vec3f{1.5f, 0.0f, 0.0f});
-        glUniformMatrix4fv(0, 1, GL_FALSE, sphereMat.Data());
+        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sphereVertices.size());
 
-        /* Render cone (yellow) */
+        if (showNormals)
+        {
+
+            /* Render sphere normals */
+            glBindVertexArray(VAO_SphereNormals);
+            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+            glDrawArrays(GL_LINES, 0, (GLsizei)sphereNormals.size());
+        }
+
+        // cone
+        matrix_stack.push();
+        matrix_stack.translate(Vec3f{0.1f, 0.1f, 0.1f});
+        matrix_stack.rotate(RAMEN_WORLD_FORWARD, totalTime * 120.0f);
+        matrix_stack.scale(Vec3f{5.0f, 5.0f, 5.0f});
         glBindVertexArray(VAO_Cone);
-        Mat4f coneMat = Translate(Vec3f{3.0f, 0.0f, 0.0f});
-        glUniformMatrix4fv(0, 1, GL_FALSE, coneMat.Data());
+        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)coneVertices.size());
 
         if (showNormals)
         {
-            /* Render cube normals */
-            glBindVertexArray(VAO_CubeNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, cubeMat.Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
-
-            /* Render cylinder normals */
-            glBindVertexArray(VAO_CylinderNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, cylinderMat.Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)cylinderNormals.size());
-
-            /* Render sphere normals */
-            glBindVertexArray(VAO_SphereNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, sphereMat.Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)sphereNormals.size());
-
             /* Render cone normals */
             glBindVertexArray(VAO_ConeNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, coneMat.Data());
+            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
             glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
             glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
             glDrawArrays(GL_LINES, 0, (GLsizei)coneNormals.size());
         }
+
+        matrix_stack.pop();
+        matrix_stack.pop();
+        matrix_stack.pop();
+        matrix_stack.pop();
+        // ####################################
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
