@@ -38,7 +38,7 @@ static uint16_t quadIndices[ NUM_QUAD_INDICES ]   = { 0, 1, 2, 2, 3, 0 };
 // ### Task 4.5  ###
 // #################
 /* copy sphere from task 3 and add UV coordinates*/
-std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks = 128, int slices = 128);
+std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks = 512, int slices = 512);
 
 std::vector<Vertex> CreateSphere(const Vec3f& color, int stacks, int slices) {
     std::vector<Vertex> vertices;
