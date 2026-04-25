@@ -70,7 +70,7 @@ Hier ist die detaillierte Gegenüberstellung:
    Zustand: Ändert nicht den globalen Zustand der aktiven Textur (kein glActiveTexture nötig).
    Einsatz: Modernes OpenGL (4.5+), sauberer und effizienter, da weniger Zustandsänderungen (State Changes) nötig sind.
    Vorteil: Die Art der Textur (1D, 2D, 3D, CubeMap) wird automatisch vom Texturobjekt erkannt, man muss nicht explizit GL_TEXTURE_2D angeben.
-3. Falls das Bild auf dem Kopf ist, können die UV-Koordinaten vertauscht werden. Der Startpunkt ist ist häufig unten links (0,0), Texturen beginnen aber häufig oben rechts (1,1).
+3. Falls das Bild auf dem Kopf ist, können die UV-Koordinaten vertauscht werden. Der Startpunkt ist häufig unten links (0,0), Texturen beginnen aber häufig oben rechts (1,1).
    Die UVs müssen geändert werden:
    - bottom-left (0,0) → top-right (1,1),
    - bottom-right (1,0) → top-left (0,1),
