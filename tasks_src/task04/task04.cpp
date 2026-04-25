@@ -150,6 +150,11 @@ int main(int argc, char** argv)
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
 
+    /* Sphere rotation angles */
+    float sphereYaw = 0.0f;
+    float spherePitch = 0.0f;
+
+
     /* VAO. */
     GLuint VAO;
     glCreateVertexArrays(1, &VAO);
@@ -236,6 +241,80 @@ int main(int argc, char** argv)
                     isRunning = false;
                 }
                 break;
+                // ###############################
+                // ### Task 4.6 (Rotate World) ###
+                // ###############################
+                case SDLK_UP:
+                {
+                    spherePitch += 1.0f;
+                }
+                break;
+                case SDLK_DOWN:
+                {
+                    spherePitch -= 1.0f;
+                }
+                break;
+                case SDLK_LEFT:
+                {
+                    sphereYaw -= 1.0f;
+                }
+                break;
+                case SDLK_RIGHT:
+                {
+                    sphereYaw += 1.0f;
+                }
+                break;
+                /* ADDITIONAL: Camera movement */
+                case SDLK_W:
+                    {
+                        camera.Translate(camera.GetForward() * 0.1f);
+                    }
+                    break;
+                case SDLK_S:
+                    {
+                        camera.Translate(-camera.GetForward() * 0.1f);
+                    }
+                    break;
+                case SDLK_A:
+                    {
+                        camera.Translate(-camera.GetRight() * 0.1f);
+                    }
+                    break;
+                case SDLK_D:
+                    {
+                        camera.Translate(camera.GetRight() * 0.1f);
+                    }
+                    break;
+                case SDLK_Q:
+                    {
+                        camera.Translate(camera.GetUp() * 0.1f);
+                    }
+                    break;
+                case SDLK_E:
+                    {
+                        camera.Translate(-camera.GetUp() * 0.1f);
+                    }
+                    break;
+                case SDLK_I:
+                    {
+                        camera.Pitch(1.0f);
+                    }
+                    break;
+                case SDLK_K:
+                    {
+                        camera.Pitch(-1.0f);
+                    }
+                    break;
+                case SDLK_J:
+                    {
+                        camera.Yaw(1.0f);
+                    }
+                    break;
+                case SDLK_L:
+                    {
+                        camera.Yaw(-1.0f);
+                    }
+                    break;
 
                 default:
                 {
@@ -278,8 +357,12 @@ int main(int argc, char** argv)
         glDrawElementsBaseVertex(GL_TRIANGLES, NUM_QUAD_INDICES, GL_UNSIGNED_SHORT, 0, 0);
 
         /* Render Sphere with world map texture */
+        /* create new matrix to change position of sphere */
+        Mat4f sphereModelMat = modelMat * Translate(Vec3f{1.0f, 0.0f, 0.0f});
+        sphereModelMat = sphereModelMat * Rotate(RAMEN_WORLD_RIGHT, -spherePitch) * sphereModelMat; // minus to invert scroll
+        sphereModelMat = sphereModelMat * Rotate(RAMEN_WORLD_UP, sphereYaw);
         glBindVertexArray(VAO_Sphere);
-        glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
+        glUniformMatrix4fv(0, 1, GL_FALSE, sphereModelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glBindTextureUnit(0, textureHandleWorldMap);
