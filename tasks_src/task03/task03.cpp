@@ -501,97 +501,102 @@ int main(int argc, char** argv)
         // ####################################
         matrix_stack = MatrixStack(); // Reset stack
 
-        // keep origin at 0,0,0
+        // --- Central Sun (Sphere) ---
         matrix_stack.push();
-
-        // 1. Base cylinder
-        float rotationSpeed = 45.0f; // 45 Grad pro Sekunde
-        matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * rotationSpeed);
-        glBindVertexArray(VAO_Cylinder);
-        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cylinderVertices.size());
-
-        if (showNormals)
         {
-            /* Render cylinder normals */
-            glBindVertexArray(VAO_CylinderNormals);
+            matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * 30.0f); // 30degrees per second
+            matrix_stack.scale(Vec3f{1.5f});
+
+            glBindVertexArray(VAO_Sphere);
             glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
             glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
             glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)cylinderNormals.size());
+            glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sphereVertices.size());
+
+            if (showNormals)
+            {
+                glBindVertexArray(VAO_SphereNormals);
+                glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                glDrawArrays(GL_LINES, 0, (GLsizei)sphereNormals.size());
+            }
+
+            // --- Planet 1 (Cube) orbiting Sun ---
+            matrix_stack.push();
+            {
+                matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * 60.0f);  // Orbit rotation
+                matrix_stack.translate(Vec3f{4.0f, 0.0f, 0.0f});       // Orbit radius
+                matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * 180.0f); // Self rotation
+                matrix_stack.scale(Vec3f{0.6f});
+
+                glBindVertexArray(VAO_Cube);
+                glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
+
+                if (showNormals)
+                {
+                    glBindVertexArray(VAO_CubeNormals);
+                    glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                    glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                    glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                    glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
+                }
+
+                // --- Moon (Cone) orbiting Planet 1 ---
+                matrix_stack.push();
+                {
+                    matrix_stack.rotate(RAMEN_WORLD_RIGHT, totalTime * 150.0f); // Tilted orbit
+                    matrix_stack.translate(Vec3f{0.0f, 1.5f, 0.0f});           // Moon radius
+                    matrix_stack.scale(Vec3f{0.4f});
+                    matrix_stack.rotate(RAMEN_WORLD_FORWARD, totalTime * 90.0f); // Spin
+
+                    glBindVertexArray(VAO_Cone);
+                    glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                    glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                    glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)coneVertices.size());
+
+                    if (showNormals)
+                    {
+                        glBindVertexArray(VAO_ConeNormals);
+                        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                        glDrawArrays(GL_LINES, 0, (GLsizei)coneNormals.size());
+                    }
+                }
+                matrix_stack.pop();
+            }
+            matrix_stack.pop();
+
+            // --- Planet 2 (Cylinder) orbiting satellite ---
+            matrix_stack.push();
+            {
+                matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * -40.0f); // Different speed and direction
+                matrix_stack.translate(Vec3f{7.0f, 0.0f, 0.0f});
+                matrix_stack.rotate(RAMEN_WORLD_FORWARD, totalTime * 45.0f); // Tilted planet axis
+                matrix_stack.scale(Vec3f{0.5f, 1.0f, 0.5f});
+
+                glBindVertexArray(VAO_Cylinder);
+                glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cylinderVertices.size());
+
+                if (showNormals)
+                {
+                    glBindVertexArray(VAO_CylinderNormals);
+                    glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
+                    glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+                    glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+                    glDrawArrays(GL_LINES, 0, (GLsizei)cylinderNormals.size());
+                }
+            }
+            matrix_stack.pop();
         }
-
-        // cube
-        matrix_stack.push();
-        matrix_stack.translate(Vec3f{-5.0f, 0.0f, 0.0f});
-        matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * -180.0f);
-        matrix_stack.scale(Vec3f{0.2f, 1.0f, 0.2f});
-        glBindVertexArray(VAO_Cube);
-        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
-
-        if (showNormals)
-        {
-            /* Render cube normals */
-            glBindVertexArray(VAO_CubeNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
-        }
-
-        // sphere
-        matrix_stack.push();
-        matrix_stack.scale(Vec3f{5.0f, 1.0f, 5.0f});
-        matrix_stack.translate(Vec3f{0.1f, 0.1f, 0.1f});
-        matrix_stack.rotate(RAMEN_WORLD_UP, totalTime * 45.0f);
-        matrix_stack.rotate(RAMEN_WORLD_RIGHT, totalTime * 45.0f);
-        matrix_stack.rotate(RAMEN_WORLD_FORWARD, totalTime * 45.0f);
-        glBindVertexArray(VAO_Sphere);
-        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sphereVertices.size());
-
-        if (showNormals)
-        {
-
-            /* Render sphere normals */
-            glBindVertexArray(VAO_SphereNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)sphereNormals.size());
-        }
-
-        // cone
-        matrix_stack.push();
-        matrix_stack.translate(Vec3f{0.1f, 0.1f, 0.1f});
-        matrix_stack.rotate(RAMEN_WORLD_FORWARD, totalTime * 120.0f);
-        matrix_stack.scale(Vec3f{5.0f, 5.0f, 5.0f});
-        glBindVertexArray(VAO_Cone);
-        glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)coneVertices.size());
-
-        if (showNormals)
-        {
-            /* Render cone normals */
-            glBindVertexArray(VAO_ConeNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, matrix_stack.top().Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-            glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-            glDrawArrays(GL_LINES, 0, (GLsizei)coneNormals.size());
-        }
-
-        matrix_stack.pop();
-        matrix_stack.pop();
-        matrix_stack.pop();
         matrix_stack.pop();
         // ####################################
 

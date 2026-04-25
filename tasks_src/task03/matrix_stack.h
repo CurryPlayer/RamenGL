@@ -43,17 +43,17 @@ public:
 
     void translate(const Vec3f& vec)
     {
-        stack.back() = Translate(vec) * stack.back();
+        stack.back() = stack.back() * Translate(vec);
     }
 
     void rotate(const Vec3f& axis, const float angle)
     {
-        stack.back() = Rotate(axis, angle) * stack.back();
+        stack.back() = stack.back() * Rotate(axis, angle);
     }
 
     void scale(const Vec3f& vec)
     {
-        stack.back() = Scale(vec) * stack.back();
+        stack.back() = stack.back() * Scale(vec);
     }
 
 };
