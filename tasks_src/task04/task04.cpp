@@ -176,6 +176,15 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+
+        // #################################
+        // ### Task 4.4 (Sample texture) ###
+        // #################################
+        /* both commands work */
+        //glBindTexture(GL_TEXTURE_2D, textureHandle);
+        glBindTextureUnit(0, textureHandle);    // --> works from opengl 4.5 and up
+
+
         glDrawElementsBaseVertex(GL_TRIANGLES, NUM_QUAD_INDICES, GL_UNSIGNED_SHORT, 0, 0);
 
         SDL_GL_SwapWindow(pRamen->GetWindow());
@@ -185,6 +194,7 @@ int main(int argc, char** argv)
 
     /* GL Resources shutdown. */
     shader.Delete();
+    glDeleteTextures(1, &textureHandle);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
 

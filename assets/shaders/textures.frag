@@ -7,7 +7,15 @@ layout(location = 1) in vec3 in_ViewSpacePos;
 layout(location = 2) in vec3 in_Color;
 layout(location = 3) in vec3 in_UV;
 
+// #################################
+// ### Task 4.4 (Sample texutre) ###
+// #################################
+/* add this line from documentation */
+layout(binding = 0) uniform sampler2D u_Texture;
+
 void main()
 {
-    outColor = vec4(in_Color, 1.0f);
+    /* pass texColor from documentation */
+    vec4 texColor = texture(u_Texture, in_UV.st);
+    outColor = texColor;
 }
