@@ -90,6 +90,21 @@ int main(int argc, char** argv)
     glEnableVertexArrayAttrib(VAO, 3);
     glVertexArrayAttribBinding(VAO, 3, 0);
 
+
+    // ########################################
+    // ### Task 4.2 (Create texture on GPU) ###
+    // ########################################
+    /* create the texture on the gpu */
+    GLuint textureHandle;
+    glCreateTextures(GL_TEXTURE_2D, 1, &textureHandle);
+    glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(textureHandle, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(textureHandle, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureStorage2D(textureHandle, 1, GL_RGBA8, image.GetWidth(), image.GetHeight());
+    glTextureSubImage2D(textureHandle, 0, 0, 0, image.GetWidth(), image.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, image.Data());
+
+
     /* Some global GL states */
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
