@@ -27,10 +27,10 @@
 // ### Task 4.1 (Add UV coordinates) ###
 // #####################################
 /* add .uv behind every vector */
-static Vertex   quadVertices[ NUM_QUAD_VERTICES ] = { { .position = Vec3f{ -1.0f, -1.0f, 0.0f }, .uv = Vec3f{1.0f, 1.0f, 0.0f} },
-                                                      { .position = Vec3f{ 1.0f, -1.0f, 0.0f }, .uv = Vec3f{0.0f, 1.0f, 0.0f} },
-                                                      { .position = Vec3f{ 1.0f, 1.0f, 0.0f }, .uv = Vec3f{0.0f, 0.0f, 0.0f} },
-                                                      { .position = Vec3f{ -1.0f, 1.0f, 0.0f }, .uv = Vec3f{1.0f, 0.0f, 0.0f} } };
+static Vertex   quadVertices[ NUM_QUAD_VERTICES ] = { { .position = Vec3f{ -1.0f, -1.0f, 0.0f }, .uv = Vec3f{0.0f, 1.0f, 0.0f} },
+                                                      { .position = Vec3f{ 1.0f, -1.0f, 0.0f }, .uv = Vec3f{1.0f, 1.0f, 0.0f} },
+                                                      { .position = Vec3f{ 1.0f, 1.0f, 0.0f }, .uv = Vec3f{1.0f, 0.0f, 0.0f} },
+                                                      { .position = Vec3f{ -1.0f, 1.0f, 0.0f }, .uv = Vec3f{0.0f, 0.0f, 0.0f} } };
 static uint16_t quadIndices[ NUM_QUAD_INDICES ]   = { 0, 1, 2, 2, 3, 0 };
 
 
