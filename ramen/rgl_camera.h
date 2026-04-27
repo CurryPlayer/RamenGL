@@ -114,6 +114,11 @@ class Camera
         RotateAroundUp(angle);
     }
 
+    void Translate(const Vec3f& delta)
+    {
+        m_Position = m_Position + delta;
+    }
+
     void DollyForward(const float& amount)
     {
         m_Position = m_Position + (amount * m_Forward);
