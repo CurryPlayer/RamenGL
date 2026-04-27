@@ -4,7 +4,7 @@
 Sorgen Sie dafür, dass Sie die neueste Version von RamenGL
 installiert haben. Kompilieren und starten Sie nun `task05.cpp`.
 Sie sollten ein Fenster sehen mit einem UI Fenster.
-Sie werden in der folgenden Aufgabe einige UI Elemente in dises
+Sie werden in der folgenden Aufgabe einige UI Elemente in dieses
 Fenster hinzufügen.
 
 ## 5.1.0) Erstellen der Cubemap
@@ -45,16 +45,16 @@ eine Rolle?
 Binden Sie nun die eben erstellte Cubemap Textur und samplen
 Sie von dieser im Shader. Nutzen Sie dazu einen `samplerCube` in
 Ihrem Fragmentshader. Nutzen Sie die OpenGL Dokumentation, um
-herauszufinden, wie auf die korrekten Texturkoordinaten zugreifen.
+herauszufinden, wie Sie auf die korrekten Texturkoordinaten zugreifen.
 Vielleicht kommen Sie aber auch von selbst drauf :)
 Hinweis: Es bedarf **nicht** der UV Koordinaten aus den Vertexdaten.
 
 ## 5.1.3) Kamera
 Implementieren Sie Tastaturinput, sodass Sie mit der Kamera
-inder Szene herumfahren und rotieren können.
+in der Szene herumfahren und rotieren können.
 
 ## 5.2) Environment Mapping
-Sie können die Cubemap dafür nutzen, um (perfekte) Reflektionen 
+Sie können die Cubemap dafür nutzen, um (perfekte) Reflexionen 
 an einem Modell zu simulieren. Laden Sie dazu ein Modell
 (`Model::Load`) aus `assets/models` und rendern Sie es mit
 einem eigenen Paar aus Vertex- und Fragmentshadern. Ermöglichen
@@ -70,4 +70,5 @@ steuerbar ist. Ändern Sie aber nun das Verhalten der Cubemap so,
 dass Sie diese nicht mehr verlassen können! Dies soll den Eindruck
 eines unendlich entfernt liegenden Horizonts simulieren, wie
 es auch in vielen Videospielen der Fall ist. Nutzen Sie
-die ImGUI Bibliothek um zwischen den Kameras hin- hund herzuschalten.
+die ImGUI Bibliothek, um ein UI Element zu erstellen, dass Sie
+zwischen den Kameras hin- und herschalten lässt.
