@@ -15,7 +15,8 @@ Schwerpunktmittelpunkt befindet und die Frontfaces des Würfels
 nach **innen** zeigen.
 Laden Sie dann, wie bisher, die Vertex (und ggf. Index) -Daten
 auf die GPU. Schreiben Sie einen Vertex- und Fragmentshader,
-der Ihnen den Würfel zeichnet. Sie müssen kein Bleuchtungsmodell
+der Ihnen den Würfel zeichnet. Sie können die Shader `task05.vert`
+und `task05.frag` als Ausgang nutzen. Sie müssen kein Bleuchtungsmodell
 implementieren. Es reicht, wenn Sie z.B. erst einmal die
 Normalenvektoren visualisieren.
 

@@ -41,6 +41,9 @@ int main(int argc, char** argv)
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
 
+    GLuint VAO;
+    glCreateVertexArrays(1, &VAO);
+
     /* Some global GL states */
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -137,7 +140,6 @@ int main(int argc, char** argv)
 
     /* GL Resources shutdown. */
     shader.Delete();
-    glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
 
     /* Ramen Shutdown */
