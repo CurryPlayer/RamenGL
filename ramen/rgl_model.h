@@ -61,7 +61,14 @@ class Model
                 for ( int k = 0; k < 3; k++ )
                 {
                     v.position[ k ] = attrib.vertices[ 3 * idx.vertex_index + k ];
-                    v.normal[ k ]   = attrib.normals[ 3 * idx.normal_index + k ];
+                    if ( idx.normal_index >= 0 )
+                    {
+                        v.normal[ k ] = attrib.normals[ 3 * idx.normal_index + k ];
+                    }
+                    else
+                    {
+                        v.normal[ k ] = 0.0f;
+                    }
                 }
                 m_Vertices.push_back(v);
             }

@@ -49,10 +49,14 @@ class Camera
      * in worldspace. So, in order to transform the camera
      * like other objects in the world (via a model matrix)
      * this adjustment is being made to the angle.
+     *
+     * UPDATE (4/27/2026): This is no longer the case since
+     * there was a bug in the lookAt() function where
+     * rows and columns were swapped during construction.
      */
     void RotateAroundWorldUp(const float& angle)
     {
-        Quat q         = AngleAxis(RAMEN_WORLD_UP, -angle);
+        Quat q         = AngleAxis(RAMEN_WORLD_UP, angle);
         m_qOrientation = q * m_qOrientation;
         m_qOrientation.Normalize();
         m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
@@ -62,7 +66,7 @@ class Camera
 
     void RotateAroundUp(const float& angle)
     {
-        Quat q         = AngleAxis(m_Up, -angle);
+        Quat q         = AngleAxis(m_Up, angle);
         m_qOrientation = q * m_qOrientation;
         m_qOrientation.Normalize();
         m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
@@ -71,7 +75,7 @@ class Camera
 
     void RotateAroundSide(const float& angle)
     {
-        Quat q         = AngleAxis(GetRight(), -angle);
+        Quat q         = AngleAxis(GetRight(), angle);
         m_qOrientation = q * m_qOrientation;
         m_qOrientation.Normalize();
         m_Forward = Rotate(m_qOrientation, RAMEN_CAMERA_FORWARD);
@@ -108,6 +112,16 @@ class Camera
     void Yaw(const float& angle)
     {
         RotateAroundUp(angle);
+    }
+
+    void DollyForward(const float& amount)
+    {
+        m_Position = m_Position + (amount * m_Forward);
+    }
+
+    void DollySide(const float& amount)
+    {
+        m_Position = m_Position + (amount * m_Right);
     }
 
   private:

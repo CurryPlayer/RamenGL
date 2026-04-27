@@ -32,8 +32,9 @@ class Md2Model
         meg_vertex* pV = pMd2->verts_array;
         for ( int i = 0; i < pMd2->header.num_verts * pMd2->header.num_frames; i++ )
         {
-            m_Vertices.push_back({ .position = Vec3f{ pV[ i ].x, pV[ i ].y, pV[ i ].z } });
-            printf("%s\n", m_Vertices[ i ].position.ToString());
+            m_Vertices.push_back({ .position = Vec3f{ pV[ i ].x, pV[ i ].y, pV[ i ].z },
+                                   .normal   = { pV[ i ].nx, pV[ i ].ny, pV[ i ].nz } });
+            // printf("%s\n", m_Vertices[ i ].position.ToString());
         }
 
         // printf("loading indices:\n");
@@ -50,11 +51,12 @@ class Md2Model
             // printf("%d\n", pI[ i + 2 ]);
         }
 
-        m_NumFrames = pMd2->header.num_frames;
-        m_NumVerts  = pMd2->header.num_verts;
-        m_NumSkins  = pMd2->header.num_skins;
-        m_NumPolys  = pMd2->header.num_polys;
-        m_FrameSize = m_NumVerts * sizeof(Vertex);
+        m_NumFrames     = pMd2->header.num_frames;
+        m_NumVerts      = pMd2->header.num_verts;
+        m_NumTextCoords = pMd2->header.num_textcoords;
+        m_NumSkins      = pMd2->header.num_skins;
+        m_NumPolys      = pMd2->header.num_polys;
+        m_FrameSize     = m_NumVerts * sizeof(Vertex);
 
         modelFile.Destroy();
 
@@ -97,6 +99,11 @@ class Md2Model
         return m_Vertices.size();
     }
 
+    const size_t NumTextCoords() const
+    {
+        return m_NumTextCoords;
+    }
+
     const size_t NumVerticesPerFrame() const
     {
         return m_NumVerts;
@@ -119,6 +126,7 @@ class Md2Model
 
     size_t m_NumFrames;
     size_t m_NumVerts;
+    size_t m_NumTextCoords;
     size_t m_NumSkins;
     size_t m_NumPolys;
 
