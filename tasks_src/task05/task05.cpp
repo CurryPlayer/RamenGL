@@ -95,6 +95,18 @@ int main(int argc, char** argv)
         fprintf(stderr, "Could not load shader.\n");
     }
 
+    /* Load images */
+    Image images{};
+    if ( !images.Load("textures/cubemaps/yokohama_park/negx.jpg") ||
+         !images.Load("textures/cubemaps/yokohama_park/negy.jpg") ||
+         !images.Load("textures/cubemaps/yokohama_park/negz.jpg") ||
+         !images.Load("textures/cubemaps/yokohama_park/posx.jpg") ||
+         !images.Load("textures/cubemaps/yokohama_park/posy.jpg") ||
+         !images.Load("textures/cubemaps/yokohama_park/posz.jpg"))
+    {
+        fprintf(stderr, "Could not load images.\n");
+    }
+
     /* Create camera */
     Camera camera(Vec3f{ 0.0f, 0.0f, 5.0f });
     camera.RotateAroundSide(0.0f);
