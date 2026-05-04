@@ -1,8 +1,9 @@
 #version 460
 
+in vec3 v_Pos;
 out vec4 outColor;
 
 void main()
 {
-    outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    outColor = vec4(normalize(v_Pos) * 0.5 + 0.5, 1.0);
 }
