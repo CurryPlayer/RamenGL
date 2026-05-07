@@ -96,19 +96,48 @@ int main(int argc, char** argv)
     }
 
     /* Load images */
-    Image images{};
-    if ( !images.Load("textures/cubemaps/yokohama_park/negx.jpg") ||
-         !images.Load("textures/cubemaps/yokohama_park/negy.jpg") ||
-         !images.Load("textures/cubemaps/yokohama_park/negz.jpg") ||
-         !images.Load("textures/cubemaps/yokohama_park/posx.jpg") ||
-         !images.Load("textures/cubemaps/yokohama_park/posy.jpg") ||
-         !images.Load("textures/cubemaps/yokohama_park/posz.jpg"))
-    {
-        fprintf(stderr, "Could not load images.\n");
+    Image posxImage{};
+    if (!posxImage.Load("textures/cubemaps/yokohama_park/posx.jpg")) {
+        fprintf(stderr, "Could not load posx image.\n");
+    }
+    Image negxImage{};
+    if (!negxImage.Load("textures/cubemaps/yokohama_park/negx.jpg")) {
+        fprintf(stderr, "Could not load negx image.\n");
+    }
+    Image posyImage{};
+    if (!posyImage.Load("textures/cubemaps/yokohama_park/posy.jpg")) {
+        fprintf(stderr, "Could not load posy image.\n");
+    }
+    Image negyImage{};
+    if (!negyImage.Load("textures/cubemaps/yokohama_park/negy.jpg")) {
+        fprintf(stderr, "Could not load negy image.\n");
+    }
+    Image poszImage{};
+    if (!poszImage.Load("textures/cubemaps/yokohama_park/posz.jpg")) {
+        fprintf(stderr, "Could not load posz image.\n");
+    }
+    Image negzImage{};
+    if (!negzImage.Load("textures/cubemaps/yokohama_park/negz.jpg")) {
+        fprintf(stderr, "Could not load negz image.\n");
     }
 
+    // ########################################
+    // ### Task 5.1.1 (Create 3D texture) ###
+    // ########################################
+    /* create the cubemap texture */
+    GLuint cubemapHandle;
+    glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemapHandle);
+    glTextureStorage2D(cubemapHandle, 1, GL_RGBA8, posxImage.GetWidth(), posxImage.GetHeight());
+    /* upload the six images to the cubemap */
+    glTextureSubImage3D(cubemapHandle, 0, 0, 0, 0, posxImage.GetWidth(), posxImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, posxImage.Data());
+    glTextureSubImage3D(cubemapHandle, 0, 0, 0, 1, negxImage.GetWidth(), negxImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negxImage.Data());
+    glTextureSubImage3D(cubemapHandle, 0, 0, 0, 2, posyImage.GetWidth(), posyImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, posyImage.Data());
+    glTextureSubImage3D(cubemapHandle, 0, 0, 0, 3, negyImage.GetWidth(), negyImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negyImage.Data());
+    glTextureSubImage3D(cubemapHandle, 0, 0, 0, 4, poszImage.GetWidth(), poszImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, poszImage.Data());
+    glTextureSubImage3D(cubemapHandle, 0, 0, 0, 5, negzImage.GetWidth(), negzImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negzImage.Data());
+
     /* Create camera */
-    Camera camera(Vec3f{ 0.0f, 0.0f, 5.0f });
+    Camera camera(Vec3f{ 0.0f, 0.0f, 0.0f });
     camera.RotateAroundSide(0.0f);
 
     /* Model mat*/
@@ -116,6 +145,7 @@ int main(int argc, char** argv)
 
     /* show normal vectors */
     bool showNormals = false;
+    bool showTexture = true;
 
     /* Helper function to create VBO and VAO from vertices */
     auto CreateGeometryBuffers = [](const std::vector<Vertex>& vertices) {
@@ -258,6 +288,11 @@ int main(int argc, char** argv)
                         camera.Roll(-1.0f);
                     }
                     break;
+                case SDLK_C:
+                    {
+                        showTexture = !showTexture;
+                    }
+                    break;
                 default:
                 {
                 }
@@ -300,10 +335,13 @@ int main(int argc, char** argv)
 
         shader.Use();
 
+        glUniform1i(99, showTexture ? 1 : 0);
+
         glBindVertexArray(VAO_Cube);
         glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        glBindTextureUnit(0, cubemapHandle);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
 
         if (showNormals)
@@ -324,6 +362,7 @@ int main(int argc, char** argv)
 
     /* GL Resources shutdown. */
     shader.Delete();
+    glDeleteTextures(1, &cubemapHandle);
     glDeleteBuffers(1, &VBO_Cube);
     glDeleteVertexArrays(1, &VAO_Cube);
     glDeleteBuffers(1, &VBO_CubeNormals);
