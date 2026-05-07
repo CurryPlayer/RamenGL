@@ -95,6 +95,12 @@ int main(int argc, char** argv)
         fprintf(stderr, "Could not load shader.\n");
     }
 
+    Shader envShader{};
+    if ( !envShader.Load("shaders/env_mapping.vert", "shaders/env_mapping.frag") )
+    {
+        fprintf(stderr, "Could not load environment mapping shader.\n");
+    }
+
     /* Load images */
     Image posxImage{};
     if (!posxImage.Load("textures/cubemaps/yokohama_park/posx.jpg")) {
@@ -121,6 +127,13 @@ int main(int argc, char** argv)
         fprintf(stderr, "Could not load negz image.\n");
     }
 
+    /* Load model */
+    Model model{};
+    if ( !model.Load("models/bunny.obj") )
+    {
+        fprintf(stderr, "Could not load model.\n");
+    }
+
     // ########################################
     // ### Task 5.1.1 (Create 3D texture) ###
     // ########################################
@@ -137,7 +150,7 @@ int main(int argc, char** argv)
     glTextureSubImage3D(cubemapHandle, 0, 0, 0, 5, negzImage.GetWidth(), negzImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negzImage.Data());
 
     /* Create camera */
-    Camera camera(Vec3f{ 0.0f, 0.0f, 0.0f });
+    Camera camera(Vec3f{ 0.0f, 0.0f, 5.0f });
     camera.RotateAroundSide(0.0f);
 
     /* Model mat*/
@@ -176,6 +189,8 @@ int main(int argc, char** argv)
     /* Create geometries */
     const std::vector<Vertex> cubeVertices = CreateCube({1.0f, 0.0f, 0.0f}); // Red
     auto [VAO_Cube, VBO_Cube] = CreateGeometryBuffers(cubeVertices);
+
+    auto [VAO_Model, VBO_Model] = CreateGeometryBuffers(model.GetVertices());
 
     /* Create normal lines */
     const std::vector<Vertex> cubeNormals = CreateNormalLines(cubeVertices);
@@ -353,6 +368,17 @@ int main(int argc, char** argv)
             glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
         }
 
+        /* Render reflecting model */
+        envShader.Use();
+        glBindVertexArray(VAO_Model);
+        Mat4f bunnyModelMat = modelMat * Scale(Vec3f{0.25f, 0.25f, 0.25f}); // Adjust scale if needed
+        glUniformMatrix4fv(0, 1, GL_FALSE, bunnyModelMat.Data());
+        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        glUniform3fv(3, 1, camera.GetPosition().Data());
+        glBindTextureUnit(0, cubemapHandle);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.NumVertices());
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         SDL_GL_SwapWindow(pRamen->GetWindow());
@@ -362,9 +388,12 @@ int main(int argc, char** argv)
 
     /* GL Resources shutdown. */
     shader.Delete();
+    envShader.Delete();
     glDeleteTextures(1, &cubemapHandle);
     glDeleteBuffers(1, &VBO_Cube);
     glDeleteVertexArrays(1, &VAO_Cube);
+    glDeleteBuffers(1, &VBO_Model);
+    glDeleteVertexArrays(1, &VAO_Model);
     glDeleteBuffers(1, &VBO_CubeNormals);
     glDeleteVertexArrays(1, &VAO_CubeNormals);
 
