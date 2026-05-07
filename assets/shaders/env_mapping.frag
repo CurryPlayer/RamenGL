@@ -13,5 +13,5 @@ void main()
     vec3 N = normalize(v_WorldNormal);
     vec3 R = reflect(I, N);
     
-    outColor = vec4(texture(u_Cubemap, R).rgb, 1.0);
+    outColor = vec4(texture(u_Cubemap, R).rgb, 1.0f);
 }
