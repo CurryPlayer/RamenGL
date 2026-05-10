@@ -32,20 +32,50 @@ class Md2Model
         meg_vertex* pV = pMd2->verts_array;
         for ( int i = 0; i < pMd2->header.num_verts * pMd2->header.num_frames; i++ )
         {
+            // uint16_t uv_index = pV[ i ].uv_index;
+            // meg_textcoord textcoord = pMd2->textcoords_array[ uv_index ];
+            // printf("index: %d, s: %f, t: %f\n", uv_index, textcoord.s, textcoord.t);
             m_Vertices.push_back({ .position = Vec3f{ pV[ i ].x, pV[ i ].y, pV[ i ].z },
-                                   .normal   = { pV[ i ].nx, pV[ i ].ny, pV[ i ].nz } });
+                                   .normal   = { pV[ i ].nx, pV[ i ].ny, pV[ i ].nz },
+                                   .color    = Vec3f{ 0.0f } });
             // printf("%s\n", m_Vertices[ i ].position.ToString());
+            // printf("%s\n", m_Vertices[ i ].uv.ToString());
         }
+        printf("Getting verts. Done.\n");
 
         // printf("loading indices:\n");
         // printf("num polys: %d\n", pMd2->header.num_polys);
 
+        for ( int i = 0; i < pMd2->header.num_frames; i++ )
+        {
+            size_t offset_into_vertsarray = size_t(i * pMd2->header.num_verts);
+            for ( int j = 0; j < pMd2->header.num_polys; j++ )
+            {
+                const meg_poly&      poly    = pMd2->polys[ j ];
+                const size_t         v0      = poly.vindex[ 0 ] + offset_into_vertsarray;
+                const size_t         v1      = poly.vindex[ 1 ] + offset_into_vertsarray;
+                const size_t         v2      = poly.vindex[ 2 ] + offset_into_vertsarray;
+                const uint16_t&      uv_idx0 = poly.tindex[ 0 ];
+                const uint16_t&      uv_idx1 = poly.tindex[ 1 ];
+                const uint16_t&      uv_idx2 = poly.tindex[ 2 ];
+                const meg_textcoord& t0      = pMd2->textcoords_array[ uv_idx0 ];
+                const meg_textcoord& t1      = pMd2->textcoords_array[ uv_idx1 ];
+                const meg_textcoord& t2      = pMd2->textcoords_array[ uv_idx2 ];
+                m_Vertices[ v0 ].uv          = Vec3f{ t0.s, t0.t, 0.0f };
+                m_Vertices[ v1 ].uv          = Vec3f{ t1.s, t1.t, 0.0f };
+                m_Vertices[ v2 ].uv          = Vec3f{ t2.s, t2.t, 0.0f };
+            }
+        }
+
         uint16_t* pI = pMd2->index_array;
         for ( int i = 0; i < pMd2->header.num_polys * 3; i += 3 )
         {
-            m_Indices.push_back(pI[ i + 0 ]);
-            m_Indices.push_back(pI[ i + 1 ]);
-            m_Indices.push_back(pI[ i + 2 ]);
+            const uint16_t& v0 = pI[ i + 0 ];
+            const uint16_t& v1 = pI[ i + 1 ];
+            const uint16_t& v2 = pI[ i + 2 ];
+            m_Indices.push_back(v0);
+            m_Indices.push_back(v1);
+            m_Indices.push_back(v2);
             // printf("%d, ", pI[ i + 0 ]);
             // printf("%d, ", pI[ i + 1 ]);
             // printf("%d\n", pI[ i + 2 ]);

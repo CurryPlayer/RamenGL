@@ -20,6 +20,11 @@ class Camera
         return m_Position;
     }
 
+    Vec3f& Position()
+    {
+        return m_Position;
+    }
+
     const Vec3f& GetForward() const
     {
         return m_Forward;
@@ -36,13 +41,12 @@ class Camera
     }
 
     /* Orient camera so that it looks at target. */
-    // void Orient(const Vec3f target)
-    // {
-    //     Vec3f newForward = Normalize(target - m_Position);
-    //     Vec3f newSide    = Normalize(Cross(newForward, Vec3f{ 0.0f, 1.0f, 0.0f }));
-    //     Vec3f newUp      = Normalize(Cross(newSide, newForward));
-    //     m_qOrientation   = AngleAxis(newForward, 0.0f);
-    // }
+    void Orient(const Vec3f target)
+    {
+        m_Forward = Normalize(target - m_Position);
+        m_Right   = Cross(m_Forward, RAMEN_WORLD_UP);
+        m_Up      = Cross(m_Right, m_Forward);
+    }
 
     /* NOTE: Angle is negated as the camera's forward is facing
      * to -z and reverses the expected rotation direction (CCW)

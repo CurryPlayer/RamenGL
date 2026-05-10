@@ -65,10 +65,17 @@ darauf, dass sich verrechnete Vektoren im gleichen Koordinatensystem
 befinden!
 
 ## 5.3) FPS Camera
-Erstellen Sie eine zweite Kamera, die ebenfalls über die Tastatur
-steuerbar ist. Ändern Sie aber nun das Verhalten der Cubemap so,
+Ändern Sie nun das Verhalten der Cubemap so,
 dass Sie diese nicht mehr verlassen können! Dies soll den Eindruck
 eines unendlich entfernt liegenden Horizonts simulieren, wie
-es auch in vielen Videospielen der Fall ist. Nutzen Sie
-die ImGUI Bibliothek, um ein UI Element zu erstellen, dass Sie
-zwischen den Kameras hin- und herschalten lässt.
+es auch in vielen Videospielen der Fall ist.  
+Nutzen Sie die ImGUI Bibliothek, um ein UI Element zu erstellen, das Sie
+zwischen der ursprünglichen Version und dem unendlich weit entfernten
+Horizont umschalten lässt.  
+
+Beispielvideo:
+[Cubemapping FPS-mode vs Escape-mode](https://syncandshare.lrz.de/getlink/fiNakx3QXFzQPcTKAQWmja/cubemap-fps-vs-escape-1080p-x264-high_compression.mp4) 
+
+*Hinweis*: Sie benötigen die Funktion `glDepthMask()`
+(https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthMask.xhtml).  
+

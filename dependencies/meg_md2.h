@@ -64,6 +64,11 @@ extern "C"
         float nx, ny, nz;
     } meg_vertex;
 
+    typedef struct meg_textcoord
+    {
+        float s, t;
+    } meg_textcoord;
+
     typedef struct meg_md2_vertex
     {
         unsigned char x, y, z;
@@ -87,12 +92,19 @@ extern "C"
         uint16_t tindex[ 3 ]; // texture indices
     } meg_md2_poly;
 
+    typedef struct meg_poly
+    {
+        uint16_t vindex[ 3 ];
+        uint16_t tindex[ 3 ];
+    } meg_poly;
+
     typedef struct meg_md2
     {
         meg_md2_header header;
-        meg_vertex*    verts_array;
+        meg_vertex*    verts_array; /* Contains vertices of all frames, frame after frame. */
         uint16_t*      index_array;
-
+        meg_textcoord* textcoords_array;
+        meg_poly*      polys;
     } meg_md2;
 
     meg_md2* meg_md2_load_from_data(unsigned char* data);
@@ -203,9 +215,11 @@ meg_md2* meg_md2_load_from_data(unsigned char* data)
     }
 
     /* Iterate through polygons to build indexarray */
-    meg_md2_poly* ppoly             = (meg_md2_poly*)(data + header->offset_polys);
-    int           num_total_indices = header->num_polys * 3;
-    md2->index_array                = (uint16_t*)malloc(num_total_indices * sizeof(uint16_t));
+    meg_md2_poly* ppoly = (meg_md2_poly*)(data + header->offset_polys);
+    md2->polys          = (meg_poly*)malloc(header->num_polys * sizeof(meg_poly));
+    memcpy(md2->polys, ppoly, header->num_polys * sizeof(meg_poly));
+    int num_total_indices = header->num_polys * 3;
+    md2->index_array      = (uint16_t*)malloc(num_total_indices * sizeof(uint16_t));
     for ( int i = 0; i < header->num_polys; i++ )
     {
         meg_md2_poly poly      = ppoly[ i ];
@@ -216,7 +230,8 @@ meg_md2* meg_md2_load_from_data(unsigned char* data)
         idx_array[ 0 ]         = vertIdxA;
         idx_array[ 1 ]         = vertIdxB;
         idx_array[ 2 ]         = vertIdxC;
-        printf("%d, %d, %d\n", idx_array[ 0 ], idx_array[ 1 ], idx_array[ 2 ]);
+        printf("vindices: %d, %d, %d\n", idx_array[ 0 ], idx_array[ 1 ], idx_array[ 2 ]);
+        printf("tindices: %d, %d, %d\n", poly.tindex[ 0 ], poly.tindex[ 1 ], poly.tindex[ 2 ]);
     }
 
     // TODO: Remove later
@@ -231,11 +246,26 @@ meg_md2* meg_md2_load_from_data(unsigned char* data)
     }
 
     /* Iterate through texture coordinates */
-    float* texcoords = (float*)(data + header->offset_textcoords);
+    uint16_t* texcoords      = (uint16_t*)(data + header->offset_textcoords);
+    md2->textcoords_array    = (meg_textcoord*)malloc(header->num_textcoords * sizeof(meg_textcoord));
+    meg_textcoord* textcoord = md2->textcoords_array;
+    printf("TEXT COORDS:\n");
     for ( int i = 0; i < header->num_textcoords; i++ )
     {
-        printf("(%f, %f)\n", texcoords[ 0 ], texcoords[ 1 ]);
+        uint16_t s = texcoords[ 0 ];
+        uint16_t t = texcoords[ 1 ];
+        printf("%d, %d\n", s, t);
+        float fS = (float)s / 255.9f;
+        float fT = (float)t / 255.9f;
+        printf("(%f, %f)\n", fS, fT);
+        *textcoord = { fS, fT };
         texcoords += 2;
+        textcoord++;
+    }
+    printf("TEXT COORDS ARRAY:\n");
+    for ( int i = 0; i < header->num_textcoords; i++ )
+    {
+        printf("%f, %f\n", md2->textcoords_array[ i ].s, md2->textcoords_array[ i ].t);
     }
 
     /* Iterate through frames */
