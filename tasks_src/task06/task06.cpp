@@ -363,6 +363,26 @@ int main(int argc, char** argv)
         SDL_GL_SwapWindow(pRamen->GetWindow());
     }
 
-    pRamen->Shutdown(); PHYSFS_deinit();
+    /* GL Resources shutdown. */
+    shadowMapShader.Delete();
+    envShadowShader.Delete();
+    groundShader.Delete();
+    lightShader.Delete();
+    skyboxShader.Delete();
+    glDeleteTextures(1, &cubemapHandle);
+    glDeleteBuffers(1, &VBO_Cube);
+    glDeleteVertexArrays(1, &VAO_Cube);
+    glDeleteBuffers(1, &VBO_Model);
+    glDeleteVertexArrays(1, &VAO_Model);
+    glDeleteBuffers(1, &VBO_Plane);
+    glDeleteVertexArrays(1, &VAO_Plane);
+    glDeleteBuffers(1, &VBO_Sphere);
+    glDeleteVertexArrays(1, &VAO_Sphere);
+    glDeleteFramebuffers(1, &depthMapFBO);
+    glDeleteTextures(1, &depthMap);
+
+    pRamen->Shutdown();
+    PHYSFS_deinit();
+
     return 0;
 }
