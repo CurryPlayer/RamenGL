@@ -153,6 +153,10 @@ int main(int argc, char** argv)
     Camera camera(Vec3f{ 0.0f, 0.0f, 5.0f });
     camera.RotateAroundSide(0.0f);
 
+    /* FPS camera (second camera). Initialize at same position as free camera. */
+    Camera fpsCam(camera.GetPosition());
+    fpsCam.RotateAroundSide(0.0f);
+
     /* Model mat*/
     Mat4f modelMat = Mat4f::Identity();
 
@@ -230,6 +234,9 @@ int main(int argc, char** argv)
 
             if ( e.type == SDL_EVENT_KEY_DOWN )
             {
+                // choose the correct camera
+                Camera* pCam = fpsCamera ? &fpsCam : &camera;
+
                 switch ( e.key.key )
                 {
                 case SDLK_ESCAPE:
@@ -242,73 +249,39 @@ int main(int argc, char** argv)
                     {
                         showNormals = !showNormals;
                     }
-                    break;
-                    /* ADDITIONAL: Camera movement */
-                case SDLK_W:
-                    {
-                        camera.Translate(camera.GetForward() * 0.05f);
-                    }
-                    break;
-                case SDLK_S:
-                    {
-                        camera.Translate(-camera.GetForward() * 0.05f);
-                    }
-                    break;
-                case SDLK_A:
-                    {
-                        camera.Translate(-camera.GetRight() * 0.05f);
-                    }
-                    break;
-                case SDLK_D:
-                    {
-                        camera.Translate(camera.GetRight() * 0.05f);
-                    }
-                    break;
-                case SDLK_Q:
-                    {
-                        camera.Translate(camera.GetUp() * 0.05f);
-                    }
-                    break;
-                case SDLK_E:
-                    {
-                        camera.Translate(-camera.GetUp() * 0.05f);
-                    }
-                    break;
-                case SDLK_UP:
-                    {
-                        camera.Pitch(1.0f);
-                    }
-                    break;
-                case SDLK_DOWN:
-                    {
-                        camera.Pitch(-1.0f);
-                    }
-                    break;
-                case SDLK_LEFT:
-                    {
-                        camera.Yaw(1.0f);
-                    }
-                    break;
-                case SDLK_RIGHT:
-                    {
-                        camera.Yaw(-1.0f);
-                    }
-                    break;
-                case SDLK_PAGEUP:
-                    {
-                        camera.Roll(1.0f);
-                    }
-                    break;
-                case SDLK_PAGEDOWN:
-                    {
-                        camera.Roll(-1.0f);
-                    }
-                    break;
-                case SDLK_C:
-                    {
-                        showTexture = !showTexture;
-                    }
-                    break;
+                break;
+            /* ADDITIONAL: Camera movement */
+            /* Camera movement (operate on active camera) */
+            case SDLK_W: { pCam->Translate(pCam->GetForward() * 0.05f); }
+                break;
+            case SDLK_S: { pCam->Translate(-pCam->GetForward() * 0.05f); }
+                break;
+            case SDLK_A: { pCam->Translate(-pCam->GetRight() * 0.05f); }
+                break;
+            case SDLK_D: { pCam->Translate(pCam->GetRight() * 0.05f); }
+                break;
+            case SDLK_Q: { pCam->Translate(pCam->GetUp() * 0.05f); }
+                break;
+            case SDLK_E: { pCam->Translate(-pCam->GetUp() * 0.05f); }
+                break;
+
+            case SDLK_UP: { pCam->Pitch(1.0f); }
+                break;
+            case SDLK_DOWN: { pCam->Pitch(-1.0f); }
+                break;
+            case SDLK_LEFT: { pCam->Yaw(1.0f); }
+                break;
+            case SDLK_RIGHT: { pCam->Yaw(-1.0f); }
+                break;
+            case SDLK_PAGEUP: { pCam->Roll(1.0f); }
+                break;
+            case SDLK_PAGEDOWN: { pCam->Roll(-1.0f); }
+                break;
+            case SDLK_C:
+                {
+                    showTexture = !showTexture;
+                }
+                break;
                 case SDLK_F:
                     {
                         fpsCamera = !fpsCamera;
@@ -328,9 +301,17 @@ int main(int argc, char** argv)
         /* Adjust viewport and perspective projection accordingly. */
         glViewport(0, 0, windowWidth, windowHeight);
 
-        /* View mat */
+        /* ##############################
+         * TASK 5.3 Choose correct camera
+         * ##############################
+         */
+        // Wähle aktive Kamera für Rendering
+        Camera* pCam = fpsCamera ? &fpsCam : &camera;
+        /* View mat (depending on correct camera) */
         Mat4f viewMat = LookAt(
-            camera.GetPosition(), camera.GetPosition() + camera.GetForward(), camera.GetUp()); // Mat4f::Identity();
+            pCam->GetPosition(), pCam->GetPosition() + pCam->GetForward(), pCam->GetUp());
+
+
 
         /* Projection mat */
         float aspect  = (float)windowWidth / (float)windowHeight;
@@ -343,7 +324,10 @@ int main(int argc, char** argv)
 
         ImGui::Begin("Cubemap settings");
 
-        /* TODO: Implement your own UI here. */
+        ImGui::Text("Controls: WASD move, Arrow keys rotate, F toggle FPS-mode");
+        ImGui::Separator();
+        ImGui::Checkbox("FPS Camera (centered cubemap)", &fpsCamera);
+        ImGui::Text("Current camera: %s", fpsCamera ? "FPS" : "Free");
 
         ImGui::End();
 
@@ -358,21 +342,48 @@ int main(int argc, char** argv)
 
         glUniform1i(99, showTexture ? 1 : 0);
 
-        glBindVertexArray(VAO_Cube);
-        glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
-        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
-        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glBindTextureUnit(0, cubemapHandle);
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
+        Mat4f modelMatSky = Mat4f::Identity();
+
+        // Choose view matrix based on camera mode
+        // FPS Mode: Use normal viewMat (with translation) - skybox moves with camera
+        // Free Mode: Use rotation-only viewMatSky - skybox stays in place
+        Mat4f viewMatSkybox;
+        if (fpsCamera)
+        {
+            // FPS Camera: skybox moves with camera (you can escape the cubemap)
+            viewMatSkybox = viewMat;
+        }
+        else
+        {
+            // Free Camera: skybox stays in place (infinite horizon, cannot escape)
+            viewMatSkybox = LookAt(
+                Vec3f{0.0f, 0.0f, 0.0f},    // eye at origin
+                pCam->GetForward(),         // look direction
+                pCam->GetUp()               // up vector
+            );
+        }
 
         if (showNormals)
         {
             glBindVertexArray(VAO_CubeNormals);
-            glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
-            glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+            glUniformMatrix4fv(0, 1, GL_FALSE, modelMatSky.Data());
+            glUniformMatrix4fv(1, 1, GL_FALSE, viewMatSkybox.Data());
             glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
             glDrawArrays(GL_LINES, 0, (GLsizei)cubeNormals.size());
         }
+
+        // Draw skybox: allow fragments with depth equal and disable depth writes so skybox is always at the back
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
+        glBindTextureUnit(0, cubemapHandle);
+        glBindVertexArray(VAO_Cube);
+        glUniformMatrix4fv(0, 1, GL_FALSE, modelMatSky.Data());
+        glUniformMatrix4fv(1, 1, GL_FALSE, viewMatSkybox.Data());
+        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeVertices.size());
+        // Re-enable depth writes and restore depth function
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
 
         /* Render reflecting model */
         envShader.Use();
@@ -381,7 +392,7 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(0, 1, GL_FALSE, bunnyModelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
-        glUniform3fv(3, 1, camera.GetPosition().Data());
+        glUniform3fv(3, 1, pCam->GetPosition().Data());
         glBindTextureUnit(0, cubemapHandle);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.NumVertices());
 
