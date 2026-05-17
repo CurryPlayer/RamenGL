@@ -76,6 +76,7 @@ Horizont umschalten lässt.
 Beispielvideo:
 [Cubemapping FPS-mode vs Escape-mode](https://syncandshare.lrz.de/getlink/fiNakx3QXFzQPcTKAQWmja/cubemap-fps-vs-escape-1080p-x264-high_compression.mp4) 
 
-*Hinweis*: Sie benötigen die Funktion `glDepthMask()`
+*Hinweis*: Es gibt mehrere Möglichkeiten dieses Verhalten zu implementieren.
+Für eine der Möglichkeiten benötigen Sie die Funktion `glDepthMask()`
 (https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthMask.xhtml).  
 
