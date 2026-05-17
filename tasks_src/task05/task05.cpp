@@ -73,8 +73,8 @@ std::vector<Vertex> CreateNormalLines(const std::vector<Vertex>& vertices, float
     if (!drawNormals) return lines;
 
     for (const auto& v : vertices) {
-        Vec3f start = v.position;
-        Vec3f end = v.position + v.normal * lineLength;
+        const Vec3f start = v.position;
+        const Vec3f end = v.position + v.normal * lineLength;
         lines.push_back({start, {0, 0, 0}, {1, 1, 1}});
         lines.push_back({end, {0, 0, 0}, {1, 1, 1}});
     }
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     }
 
     Shader envShader{};
-    if ( !envShader.Load("shaders/env_mapping.vert", "shaders/env_mapping.frag") )
+    if ( !envShader.Load("shaders/task05_env_mapping.vert", "shaders/task05_env_mapping.frag") )
     {
         fprintf(stderr, "Could not load environment mapping shader.\n");
     }
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 
     /* Load model */
     Model model{};
-    if ( !model.Load("models/bunny.obj") )
+    if ( !model.Load("models/Skull.obj") )
     {
         fprintf(stderr, "Could not load model.\n");
     }
@@ -159,6 +159,7 @@ int main(int argc, char** argv)
     /* show normal vectors */
     bool showNormals = false;
     bool showTexture = true;
+    bool fpsCamera = false;
 
     /* Helper function to create VBO and VAO from vertices */
     auto CreateGeometryBuffers = [](const std::vector<Vertex>& vertices) {
@@ -245,32 +246,32 @@ int main(int argc, char** argv)
                     /* ADDITIONAL: Camera movement */
                 case SDLK_W:
                     {
-                        camera.Translate(camera.GetForward() * 0.1f);
+                        camera.Translate(camera.GetForward() * 0.05f);
                     }
                     break;
                 case SDLK_S:
                     {
-                        camera.Translate(-camera.GetForward() * 0.1f);
+                        camera.Translate(-camera.GetForward() * 0.05f);
                     }
                     break;
                 case SDLK_A:
                     {
-                        camera.Translate(-camera.GetRight() * 0.1f);
+                        camera.Translate(-camera.GetRight() * 0.05f);
                     }
                     break;
                 case SDLK_D:
                     {
-                        camera.Translate(camera.GetRight() * 0.1f);
+                        camera.Translate(camera.GetRight() * 0.05f);
                     }
                     break;
                 case SDLK_Q:
                     {
-                        camera.Translate(camera.GetUp() * 0.1f);
+                        camera.Translate(camera.GetUp() * 0.05f);
                     }
                     break;
                 case SDLK_E:
                     {
-                        camera.Translate(-camera.GetUp() * 0.1f);
+                        camera.Translate(-camera.GetUp() * 0.05f);
                     }
                     break;
                 case SDLK_UP:
@@ -306,6 +307,11 @@ int main(int argc, char** argv)
                 case SDLK_C:
                     {
                         showTexture = !showTexture;
+                    }
+                    break;
+                case SDLK_F:
+                    {
+                        fpsCamera = !fpsCamera;
                     }
                     break;
                 default:
@@ -371,7 +377,7 @@ int main(int argc, char** argv)
         /* Render reflecting model */
         envShader.Use();
         glBindVertexArray(VAO_Model);
-        Mat4f bunnyModelMat = modelMat * Scale(Vec3f{0.25f, 0.25f, 0.25f}); // Adjust scale if needed
+        Mat4f bunnyModelMat = modelMat * Scale(Vec3f{0.15f, 0.15f, 0.15f});
         glUniformMatrix4fv(0, 1, GL_FALSE, bunnyModelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
