@@ -33,18 +33,20 @@ class Model
         tinyobj::ObjReader       reader;
         tinyobj::ObjReaderConfig reader_config;
         reader_config.mtl_search_path = ""; // not needed if no MTL
-        if ( !reader.ParseFromString(std::string(modelFile.data), std::string("")) )
+        if ( !reader.ParseFromString(std::string(modelFile.data, modelFile.m_size), std::string("")) )
         {
             if ( !reader.Error().empty() )
             {
                 fprintf(stderr, "tinyobjloader: %s\n", reader.Error().c_str());
             }
-            return false;
             modelFile.Destroy();
+            return false;
         }
 
+        m_Shapes   = reader.GetShapes();
+        m_Vertices.clear();
+
         const tinyobj::attrib_t& attrib = reader.GetAttrib();
-        m_Shapes                        = reader.GetShapes();
 
         printf("loaded: '%s'\n", file);
         printf("# of vertices: %d\n", (int)(attrib.vertices.size()) / 3);
