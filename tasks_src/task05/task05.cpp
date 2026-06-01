@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <algorithm>
+#include <string>
 #include <vector>
 
 #include <SDL3/SDL.h>
@@ -127,11 +129,34 @@ int main(int argc, char** argv)
         fprintf(stderr, "Could not load negz image.\n");
     }
 
-    /* Load model */
+    /* List models */
+    std::vector<std::string> modelList;
+    if (char** files = PHYSFS_enumerateFiles("models")) {
+        for (char** i = files; *i != nullptr; i++) {
+            if (std::string filename = *i; filename.find(".obj") != std::string::npos) {
+                modelList.push_back(filename);
+            }
+        }
+        PHYSFS_freeList(files);
+    }
+    std::ranges::sort(modelList);
+    int selectedModelIndex = 0;
+    for (size_t i = 0; i < modelList.size(); ++i) {
+        if (modelList[i] == "Skull.obj") {
+            selectedModelIndex = static_cast<int>(i);
+            break;
+        }
+    }
+
+    /* Load initial model */
     Model model{};
-    if ( !model.Load("models/Skull.obj") )
+    if ( !modelList.empty() )
     {
-        fprintf(stderr, "Could not load model.\n");
+        std::string path = "models/" + modelList[selectedModelIndex];
+        if ( !model.Load(path.c_str()) )
+        {
+            fprintf(stderr, "Could not load model: %s\n", path.c_str());
+        }
     }
 
     // ########################################
@@ -313,6 +338,31 @@ int main(int argc, char** argv)
         ImGui::Separator();
         ImGui::Checkbox("FPS Camera (centered cubemap)", &fpsCamera);
         ImGui::Text("Current camera: %s", fpsCamera ? "FPS" : "Free");
+
+        ImGui::Separator();
+        ImGui::Text("Model Selection");
+        if (!modelList.empty()) {
+            if (ImGui::BeginCombo("Model", modelList[selectedModelIndex].c_str())) {
+                for (int i = 0; i < static_cast<int>(modelList.size()); i++) {
+                    const bool is_selected = (selectedModelIndex == i);
+                    if (ImGui::Selectable(modelList[i].c_str(), is_selected)) {
+                        selectedModelIndex = i;
+                        std::string path = "models/" + modelList[selectedModelIndex];
+                        if (model.Load(path.c_str())) {
+                            glDeleteBuffers(1, &VBO_Model);
+                            glDeleteVertexArrays(1, &VAO_Model);
+                            auto [newVAO, newVBO] = CreateGeometryBuffers(model.GetVertices());
+                            VAO_Model = newVAO;
+                            VBO_Model = newVBO;
+                        }
+                    }
+                    if (is_selected) ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "No models found in models/");
+        }
 
         ImGui::End();
 
