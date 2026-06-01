@@ -17,3 +17,4 @@ imgui.ini
 **/.DS_Store
 **/*.zip
 **/*.ZIP
+**/CMakeFiles/**

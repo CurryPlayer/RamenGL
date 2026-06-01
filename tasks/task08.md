@@ -32,4 +32,39 @@ Welche visuellen Unterschiede gibt es und wann sind diese besonders
 auffällig? Was ist gerade bei der Berechnung pro Fragment
 im Fragmentshader zu beachten?
 
-## 8.1 Normalmapping (TBA)
+## 8.1 Normalmapping
+
+Updaten Sie Ihre `assets` mithilfe des `get_assets.sh` (UNIX)
+bzw. `setup.bat` (Windows) Scripts, um die nötigen Texturen
+und Modelle nachzuladen.
+
+Erweitern Sie Ihren Renderer nun um Bumpmapping mithilfe
+einer Normalmap.
+
+Erstellen Sie eine weitere OpenGL Textur und befüllen Sie diese mit
+den Daten einer **Normalmap**. Sie finden eine solche Textur in
+`assets/textures/rock-wall-morter-bl/`.
+
+Laden Sie ausserdem die `unitplane.obj` (in `assets/models/`) als Modell, auf welches
+Sie die Normalmap anwenden. Der Modelloader in `rgl_model.h`
+erstellt Ihnen Tangen- und Bitangent Vektoren. **Vergessen Sie nicht**,
+sowohl Tangent- als auch Bitangent Vektoren ihrem VAO als
+Vertex-Attribute bekannt zu machen.
+
+Nutzen Sie nun für sämtliche Beleuchtungsberechnungen die Normalen
+aus der Normalmap anstatt solcher, die Sie bisher über das
+Vertexattribut genutzt hatten. Die Normalen in der Normalmap
+liegen im **Tangentspace** vor. Überführen Sie diese mithilfe
+der **tangent** und **bitangent** Vertexattribute in das Koordinatensystem
+in dem Sie die Beleuchtungsberechnung vornehmen. 
+
+Fügen Sie Ihrer UI einen weiteren Toggle hinzu, der es Ihnen ermöglicht
+das Bumpmapping zu aktivieren bzw. deaktivieren.
+
+Liesse sich die Beleuchtungsberechnung auch im Tangentspace durchführen?
+Ist es nötig sowohl Tangent- als auch Bitangentvektoren in den Shader
+zu laden, oder reicht es einen von beiden mitzuliefern? Begründen Sie
+Ihre Antwort.
+
+
+
