@@ -9,12 +9,15 @@ in vec4 v_FragPosLightSpace;
 layout (location = 3) uniform vec3 u_LightPos;
 layout (location = 4) uniform vec3 u_ViewPos;
 layout (location = 99) uniform bool u_ShowTexture;
+layout (location = 100) uniform bool u_UseShadows;
 
 layout (binding = 1) uniform sampler2D u_ShadowMap;
 layout (binding = 2) uniform sampler2D u_GroundTexture;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
+    if (!u_UseShadows) return 0.0;
+
     // 1. Perspective divide
     // Transform light-space position from homogeneous coordinates to NDC [-1, 1]
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -30,10 +33,11 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     float currentDepth = projCoords.z;
     
     // 5. Check whether current fragment is in shadow
-    // We add a small bias to counteract "Shadow Acne" (caused by depth buffer precision/sampling)
+    // We use a small bias to counteract "Shadow Acne"
     vec3 normal = normalize(v_Normal);
     vec3 lightDir = normalize(u_LightPos - v_FragPos);
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    // Lower bias for better precision, but still preventing acne
+    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.0005);
     
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
     
@@ -48,7 +52,7 @@ void main()
 {
     vec3 color;
     if (u_ShowTexture) {
-        // Use simple planar mapping (XZ coordinates) as our vertices don't have UVs
+        // Use simple planar mapping (XZ coordinates)
         vec2 uv = v_FragPos.xz * 0.5;
         color = texture(u_GroundTexture, uv).rgb;
     } else {

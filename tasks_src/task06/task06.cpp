@@ -510,7 +510,8 @@ int main(int argc, char** argv)
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)planeVertices.size());
 
         // Render Model
-        Mat4f scullModelMat = modelMat * Scale(Vec3f{ 0.15f, 0.15f, 0.15f });
+        // We translate the skull up by 0.5 units so it sits ON the plane instead of being clipped.
+        Mat4f scullModelMat = modelMat * Translate(Vec3f{0.0f, 0.5f, 0.0f}) * Scale(Vec3f{ 0.15f, 0.15f, 0.15f });
         glUniformMatrix4fv(1, 1, GL_FALSE, scullModelMat.Data());
         glBindVertexArray(VAO_Model);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.NumVertices());
@@ -529,7 +530,6 @@ int main(int argc, char** argv)
         glUniform1i(99, showTexture ? 1 : 0);
 
         Mat4f modelMatSky = Mat4f::Identity();
-        Mat4f modelMat = Mat4f::Identity();
 
         /* ##############################
          * TASK 5.3 Choose correct camera
@@ -588,8 +588,9 @@ int main(int argc, char** argv)
         glUniform3fv(3, 1, lightPos.Data());
         glUniform3fv(4, 1, camera.GetPosition().Data());
         
-        // Pass ground texture toggle and bind textures
+        // Pass ground texture toggle, shadow toggle and bind textures
         glUniform1i(99, showGroundTexture ? 1 : 0);
+        glUniform1i(100, useShadows ? 1 : 0);
         
         // Bind the shadow map texture to binding unit 1
         glBindTextureUnit(1, shadowMapTexture);
@@ -611,7 +612,8 @@ int main(int argc, char** argv)
         /* Render reflecting model */
         envShader.Use();
         glBindVertexArray(VAO_Model);
-        scullModelMat = modelMat * Scale(Vec3f{0.15f, 0.15f, 0.15f});
+        // Same transformation as in Pass 1
+        scullModelMat = modelMat * Translate(Vec3f{0.0f, 0.5f, 0.0f}) * Scale(Vec3f{0.15f, 0.15f, 0.15f});
         glUniformMatrix4fv(0, 1, GL_FALSE, scullModelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
@@ -620,6 +622,7 @@ int main(int argc, char** argv)
         // Pass shadow mapping specific uniforms to the model shader
         glUniformMatrix4fv(10, 1, GL_FALSE, lightSpaceMatrix.Data());
         glUniform3fv(11, 1, lightPos.Data());
+        glUniform1i(100, useShadows ? 1 : 0);
         
         // Ensure both textures (Cubemap for reflection and ShadowMap) are bound
         glBindTextureUnit(0, cubemapHandle);
