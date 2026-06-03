@@ -214,6 +214,19 @@ Mat4f PerspectiveProjection(const float& fovy, const float& aspect, const float&
                  0.0f);
 }
 
+/* Creates a right-handed, y-up, orthographic projection matrix. */
+Mat4f OrthographicProjection(const float& left, const float& right, const float& bottom, const float& top, const float& near, const float& far)
+{
+    Mat4f result = Mat4f::Identity();
+    result(0, 0) = 2.0f / (right - left);
+    result(1, 1) = 2.0f / (top - bottom);
+    result(2, 2) = -2.0f / (far - near);
+    result(0, 3) = -(right + left) / (right - left);
+    result(1, 3) = -(top + bottom) / (top - bottom);
+    result(2, 3) = -(far + near) / (far - near);
+    return result;
+}
+
 Mat4f Translate(const Vec3f& v)
 {
     Mat4f result = Mat4f::Identity();

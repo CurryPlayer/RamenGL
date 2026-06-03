@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     }
 
     Shader envShader{};
-    if ( !envShader.Load("shaders/task05_env_mapping.vert", "shaders/task05_env_mapping.frag") )
+    if ( !envShader.Load("shaders/task06_model.vert", "shaders/task06_model.frag") )
     {
         fprintf(stderr, "Could not load environment mapping shader.\n");
     }
@@ -126,8 +126,25 @@ int main(int argc, char** argv)
     {
         fprintf(stderr, "Could not load debug shader.\n");
     }
+    Shader shadowShader{};
+    if ( !shadowShader.Load("shaders/task06_shadow_map.vert", "shaders/task06_shadow_map.frag") )
+    {
+        fprintf(stderr, "Could not load shadow shader.\n");
+    }
 
     /* Load images */
+    Image groundImage{};
+    if (!groundImage.Load("textures/linux-quake-512x512.png")) {
+        fprintf(stderr, "Could not load ground texture.\n");
+    }
+    GLuint groundTextureHandle;
+    glCreateTextures(GL_TEXTURE_2D, 1, &groundTextureHandle);
+    glTextureStorage2D(groundTextureHandle, 1, GL_RGBA8, groundImage.GetWidth(), groundImage.GetHeight());
+    glTextureSubImage2D(groundTextureHandle, 0, 0, 0, groundImage.GetWidth(), groundImage.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, groundImage.Data());
+    glTextureParameteri(groundTextureHandle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTextureParameteri(groundTextureHandle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glGenerateTextureMipmap(groundTextureHandle);
+
     Image posxImage{};
     if (!posxImage.Load("textures/cubemaps/yokohama_park/posx.jpg")) {
         fprintf(stderr, "Could not load posx image.\n");
@@ -197,6 +214,49 @@ int main(int argc, char** argv)
     glTextureSubImage3D(cubemapHandle, 0, 0, 0, 3, negyImage.GetWidth(), negyImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negyImage.Data());
     glTextureSubImage3D(cubemapHandle, 0, 0, 0, 4, poszImage.GetWidth(), poszImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, poszImage.Data());
     glTextureSubImage3D(cubemapHandle, 0, 0, 0, 5, negzImage.GetWidth(), negzImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negzImage.Data());
+
+    /* --- Shadow Mapping Configuration --- */
+    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+    
+    // 1. Create a Framebuffer Object (FBO)
+    // The FBO is a container for textures that we can render into instead of the screen.
+    GLuint shadowMapFBO;
+    glCreateFramebuffers(1, &shadowMapFBO);
+
+    // 2. Create the Depth Texture (The Shadow Map)
+    // This texture will store the distance from the light source to the nearest geometry.
+    GLuint shadowMapTexture;
+    glCreateTextures(GL_TEXTURE_2D, 1, &shadowMapTexture);
+    // Use GL_DEPTH_COMPONENT24 for high precision depth storage.
+    glTextureStorage2D(shadowMapTexture, 1, GL_DEPTH_COMPONENT24, SHADOW_WIDTH, SHADOW_HEIGHT);
+
+    // Set texture parameters:
+    // NEAREST filtering is usually preferred for raw depth values to avoid interpolation artifacts during the depth test.
+    glTextureParameteri(shadowMapTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(shadowMapTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // CLAMP_TO_BORDER ensures that areas outside the light's frustum are treated as "not in shadow" (by setting a high depth value).
+    glTextureParameteri(shadowMapTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(shadowMapTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTextureParameterfv(shadowMapTexture, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    // 3. Attach the texture to the FBO
+    // We only need the depth attachment because shadow mapping doesn't require color information.
+    glNamedFramebufferTexture(shadowMapFBO, GL_DEPTH_ATTACHMENT, shadowMapTexture, 0);
+    
+    // Tell OpenGL that we don't want to draw any color data to this FBO.
+    glNamedFramebufferDrawBuffer(shadowMapFBO, GL_NONE);
+    glNamedFramebufferReadBuffer(shadowMapFBO, GL_NONE);
+
+    // Check if the framebuffer is complete and ready for use.
+    if (glCheckNamedFramebufferStatus(shadowMapFBO, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        fprintf(stderr, "Error: Shadow Map Framebuffer is not complete!\n");
+    }
+
+    /* Light Source State */
+    Vec3f lightPos = { 2.0f, 4.0f, 1.0f };
+    bool useShadows = true;
+    bool showGroundTexture = false;
 
     /* Create camera */
     Camera camera(Vec3f{ 0.0f, 2.0f, 5.0f });
@@ -363,9 +423,12 @@ int main(int argc, char** argv)
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Cubemap settings");
-
+        ImGui::Begin("Shadow Mapping Settings");
         ImGui::Text("Controls: WASD move, Arrow keys rotate, F toggle FPS-mode");
+        ImGui::Separator();
+        ImGui::Checkbox("Use Shadows", &useShadows);
+        ImGui::Checkbox("Show Ground Texture", &showGroundTexture);
+        ImGui::DragFloat3("Light Position", lightPos.Data(), 0.1f);
         ImGui::Separator();
         ImGui::Checkbox("FPS Camera (centered cubemap)", &fpsCamera);
         ImGui::Text("Current camera: %s", fpsCamera ? "FPS" : "Free");
@@ -406,6 +469,51 @@ int main(int argc, char** argv)
 
         /* ImGUI Rendering */
         ImGui::Render();
+
+        /* --- Shadow Mapping: Pass 1 (Render to Texture) --- */
+        // In the first pass, we render the scene from the light's perspective
+        // to populate the depth texture (the shadow map).
+
+        // 1. Calculate Light Matrices
+        // The light needs a view matrix (LookAt) and a projection matrix (usually Orthographic for directional lights)
+        Mat4f lightView = LookAt(lightPos, Vec3f{ 0.0f, 0.0f, 0.0f }, RAMEN_WORLD_UP);
+        // Orthographic projection is used for directional lights (like the sun)
+        // Adjust the frustum size (-10 to 10) to cover your entire scene.
+        // For a spotlight, you would use PerspectiveProjection instead.
+        float orthoSize = 10.0f;
+        Mat4f lightProj = OrthographicProjection(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.1f, 20.0f);
+        
+        // Let's assume the light space matrix is what we need in the shader.
+        Mat4f lightSpaceMatrix = lightProj * lightView;
+
+        // 2. Setup Rendering State for Shadow Pass
+        shadowShader.Use();
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT); // Clear ONLY the depth buffer
+        
+        // We use a bit of "peter panning" prevention here by culling front faces
+        // instead of back faces during the shadow pass.
+        glCullFace(GL_FRONT);
+
+        // 3. Render Scene into Shadow Map
+        glUniformMatrix4fv(0, 1, GL_FALSE, lightSpaceMatrix.Data());
+
+        // Render Plane
+        glUniformMatrix4fv(1, 1, GL_FALSE, modelMat.Data());
+        glBindVertexArray(VAO_Plane);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)planeVertices.size());
+
+        // Render Model
+        Mat4f scullModelMat = modelMat * Scale(Vec3f{ 0.15f, 0.15f, 0.15f });
+        glUniformMatrix4fv(1, 1, GL_FALSE, scullModelMat.Data());
+        glBindVertexArray(VAO_Model);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.NumVertices());
+
+        // 4. Reset Rendering State
+        glCullFace(GL_BACK); // Restore normal culling
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // Back to default framebuffer
+        glViewport(0, 0, windowWidth, windowHeight); // Restore screen viewport
 
         /* Rendering */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -464,9 +572,25 @@ int main(int argc, char** argv)
 
         groundShader.Use();
         glBindVertexArray(VAO_Plane);
+        // Pass standard transformation matrices
         glUniformMatrix4fv(0, 1, GL_FALSE, modelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        
+        // Pass shadow mapping specific uniforms
+        // We use the same LightSpaceMatrix calculated in Pass 1
+        glUniformMatrix4fv(10, 1, GL_FALSE, lightSpaceMatrix.Data());
+        glUniform3fv(3, 1, lightPos.Data());
+        glUniform3fv(4, 1, camera.GetPosition().Data());
+        
+        // Pass ground texture toggle and bind textures
+        glUniform1i(99, showGroundTexture ? 1 : 0);
+        
+        // Bind the shadow map texture to binding unit 1
+        glBindTextureUnit(1, shadowMapTexture);
+        // Bind the ground texture to binding unit 2
+        glBindTextureUnit(2, groundTextureHandle);
+        
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)planeVertices.size());
 
         if (showNormals)
@@ -482,12 +606,20 @@ int main(int argc, char** argv)
         /* Render reflecting model */
         envShader.Use();
         glBindVertexArray(VAO_Model);
-        Mat4f scullModelMat = modelMat * Scale(Vec3f{0.15f, 0.15f, 0.15f});
+        scullModelMat = modelMat * Scale(Vec3f{0.15f, 0.15f, 0.15f});
         glUniformMatrix4fv(0, 1, GL_FALSE, scullModelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
         glUniform3fv(3, 1, camera.GetPosition().Data());
+        
+        // Pass shadow mapping specific uniforms to the model shader
+        glUniformMatrix4fv(10, 1, GL_FALSE, lightSpaceMatrix.Data());
+        glUniform3fv(11, 1, lightPos.Data());
+        
+        // Ensure both textures (Cubemap for reflection and ShadowMap) are bound
         glBindTextureUnit(0, cubemapHandle);
+        glBindTextureUnit(1, shadowMapTexture);
+        
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.NumVertices());
 
         if (showNormals)
@@ -513,6 +645,7 @@ int main(int argc, char** argv)
     envShader.Delete();
     debugShader.Delete();
     glDeleteTextures(1, &cubemapHandle);
+    glDeleteTextures(1, &groundTextureHandle);
     glDeleteBuffers(1, &VBO_Cube);
     glDeleteVertexArrays(1, &VAO_Cube);
     glDeleteBuffers(1, &VBO_Plane);
@@ -526,6 +659,10 @@ int main(int argc, char** argv)
     glDeleteBuffers(1, &VBO_ModelNormals);
     glDeleteVertexArrays(1, &VAO_ModelNormals);
 
+
+    shadowShader.Delete();
+    glDeleteFramebuffers(1, &shadowMapFBO);
+    glDeleteTextures(1, &shadowMapTexture);
 
     /* Ramen Shutdown */
     pRamen->Shutdown();

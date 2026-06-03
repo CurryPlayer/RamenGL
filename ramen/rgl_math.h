@@ -781,6 +781,9 @@ Mat4f LookAt(const Vec3f& position, const Vec3f& target, const Vec3f& up);
 /* Creates a right-handed, y-up, perspective projection matrix. */
 Mat4f PerspectiveProjection(const float& fovy, const float& aspect, const float& near, const float& far);
 
+/* Creates a right-handed, y-up, orthographic projection matrix. */
+Mat4f OrthographicProjection(const float& left, const float& right, const float& bottom, const float& top, const float& near, const float& far);
+
 Mat4f Translate(const Vec3f& v);
 Mat4f Rotate(const Vec3f& axis, const float& angleDgr);
 void  Rotate(Mat4f& M, const Vec3f& axis, const float& angleDgr);
