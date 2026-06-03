@@ -4,7 +4,10 @@ project(task06 VERSION 0.0.1)
 if (UNIX)
     set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
     set(CMAKE_SKIP_RPATH OFF CACHE BOOL "Skip RPATH" FORCE)
+    # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+    # set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
     set(CMAKE_INSTALL_RPATH "$ORIGIN/")
+    # set(ldflags "${ldflags} -Wl,-z,origin")
 endif()
 
 add_executable(task06
@@ -39,7 +42,6 @@ set_target_properties(task06 PROPERTIES
 target_include_directories(task06 PUBLIC
     ../../dependencies/glad/include
     ../../dependencies/)
-
 target_link_libraries(task06
     PRIVATE SDL3::SDL3
     PRIVATE physfs

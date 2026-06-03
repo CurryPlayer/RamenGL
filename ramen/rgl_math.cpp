@@ -214,32 +214,6 @@ Mat4f PerspectiveProjection(const float& fovy, const float& aspect, const float&
                  0.0f);
 }
 
-Mat4f OrthographicProjection(float left, float right, float bottom, float top, float near, float far)
-{
-    float x  = 2.0f / (right - left);
-    float y  = 2.0f / (top - bottom);
-    float z  = -2.0f / (far - near);
-    float tx = -(right + left) / (right - left);
-    float ty = -(top + bottom) / (top - bottom);
-    float tz = -(far + near) / (far - near);
-    return Mat4f(x,
-                 0.0f,
-                 0.0f,
-                 0.0f,
-                 0.0f,
-                 y,
-                 0.0f,
-                 0.0f,
-                 0.0f,
-                 0.0f,
-                 z,
-                 0.0f,
-                 tx,
-                 ty,
-                 tz,
-                 1.0f);
-}
-
 Mat4f Translate(const Vec3f& v)
 {
     Mat4f result = Mat4f::Identity();

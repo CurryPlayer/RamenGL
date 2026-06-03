@@ -17,8 +17,6 @@ class Shader
 
     void Delete();
 
-    GLuint GetID() const { return m_Program; }
-
   private:
     bool CompileShader(const File& shaderFile, GLuint* shader, GLenum shaderType)
     {
