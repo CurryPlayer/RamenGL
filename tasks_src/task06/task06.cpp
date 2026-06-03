@@ -299,6 +299,11 @@ int main(int argc, char** argv)
     /* Create geometries */
     const std::vector<Vertex> cubeVertices = CreateCube({1.0f, 0.0f, 0.0f}); // Red
     auto [VAO_Cube, VBO_Cube] = CreateGeometryBuffers(cubeVertices);
+    
+    // Create a visual marker for the light source (Yellow Cube)
+    const std::vector<Vertex> lightMarkerVertices = CreateCube({1.0f, 1.0f, 0.0f}); // Yellow
+    auto [VAO_LightMarker, VBO_LightMarker] = CreateGeometryBuffers(lightMarkerVertices);
+
     const std::vector<Vertex> planeVertices = CreatePlane(5.0f, {0.5f, 0.5f, 0.5f}); // gray
     auto [VAO_Plane, VBO_Plane] = CreateGeometryBuffers(planeVertices);
 
@@ -632,6 +637,15 @@ int main(int argc, char** argv)
             glDrawArrays(GL_LINES, 0, (GLsizei)modelNormals.size());
         }
 
+        /* Render Light Marker (Yellow Cube) */
+        debugShader.Use();
+        Mat4f lightModelMat = Translate(lightPos) * Scale(Vec3f{0.2f, 0.2f, 0.2f});
+        glUniformMatrix4fv(0, 1, GL_FALSE, lightModelMat.Data());
+        glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
+        glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
+        glBindVertexArray(VAO_LightMarker);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)lightMarkerVertices.size());
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         SDL_GL_SwapWindow(pRamen->GetWindow());
@@ -658,6 +672,8 @@ int main(int argc, char** argv)
     glDeleteVertexArrays(1, &VAO_PlaneNormals);
     glDeleteBuffers(1, &VBO_ModelNormals);
     glDeleteVertexArrays(1, &VAO_ModelNormals);
+    glDeleteBuffers(1, &VBO_LightMarker);
+    glDeleteVertexArrays(1, &VAO_LightMarker);
 
 
     shadowShader.Delete();
