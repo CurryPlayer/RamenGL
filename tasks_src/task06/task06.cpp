@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     glTextureSubImage3D(cubemapHandle, 0, 0, 0, 5, negzImage.GetWidth(), negzImage.GetHeight(), 1, GL_RGBA, GL_UNSIGNED_BYTE, negzImage.Data());
 
     /* --- Shadow Mapping Configuration --- */
-    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+    constexpr unsigned int SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
     
     // 1. Create a Framebuffer Object (FBO)
     // The FBO is a container for textures that we can render into instead of the screen.
@@ -511,7 +511,7 @@ int main(int argc, char** argv)
 
         // Render Model
         // We translate the skull up by 0.5 units so it sits ON the plane instead of being clipped.
-        Mat4f scullModelMat = modelMat * Translate(Vec3f{0.0f, 0.5f, 0.0f}) * Scale(Vec3f{ 0.15f, 0.15f, 0.15f });
+        Mat4f scullModelMat = modelMat * Translate(Vec3f{0.0f, 0.15f, 0.0f}) * Scale(Vec3f{ 0.15f, 0.15f, 0.15f });
         glUniformMatrix4fv(1, 1, GL_FALSE, scullModelMat.Data());
         glBindVertexArray(VAO_Model);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.NumVertices());
@@ -613,7 +613,7 @@ int main(int argc, char** argv)
         envShader.Use();
         glBindVertexArray(VAO_Model);
         // Same transformation as in Pass 1
-        scullModelMat = modelMat * Translate(Vec3f{0.0f, 0.5f, 0.0f}) * Scale(Vec3f{0.15f, 0.15f, 0.15f});
+        scullModelMat = modelMat * Translate(Vec3f{0.0f, 0.15f, 0.0f}) * Scale(Vec3f{0.15f, 0.15f, 0.15f});
         glUniformMatrix4fv(0, 1, GL_FALSE, scullModelMat.Data());
         glUniformMatrix4fv(1, 1, GL_FALSE, viewMat.Data());
         glUniformMatrix4fv(2, 1, GL_FALSE, projMat.Data());
